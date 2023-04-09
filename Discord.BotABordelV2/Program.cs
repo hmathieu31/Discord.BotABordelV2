@@ -1,4 +1,8 @@
+using Discord.BotABordelV2.Commands;
 using DSharpPlus;
+using DSharpPlus.CommandsNext;
+using DSharpPlus.SlashCommands;
+using System.Reflection;
 
 namespace Discord.BotABordelV2
 {
@@ -7,17 +11,25 @@ namespace Discord.BotABordelV2
         public static void Main(string[] args)
         {
             IHost host = Host.CreateDefaultBuilder(args)
-                .ConfigureServices(services =>
+                .ConfigureServices((builder, services) =>
                 {
                     services.AddHostedService<Worker>();
                     services.AddSingleton((serviceProvider) =>
                     {
                         var discordClient = new DiscordClient(new DiscordConfiguration
                         {
-                            Token = serviceProvider.GetRequiredService<IConfiguration>()["DiscordBot:Token"],
+                            Token = builder.Configuration["DiscordBot:Token"],
                             TokenType = TokenType.Bot,
-                            Intents = DiscordIntents.AllUnprivileged
+                            Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents
                         });
+                        var commands = discordClient.UseCommandsNext(new CommandsNextConfiguration()
+                        {
+                            StringPrefixes = new[] { "!" }
+                        });
+                        var slash = discordClient.UseSlashCommands();
+                        commands.RegisterCommands(Assembly.GetExecutingAssembly());
+                        slash.RegisterCommands(Assembly.GetExecutingAssembly());
+
                         return discordClient;
                     });
                 })
