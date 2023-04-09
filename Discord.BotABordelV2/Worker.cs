@@ -1,5 +1,6 @@
 using DSharpPlus;
 using DSharpPlus.EventArgs;
+using DSharpPlus.Lavalink;
 
 namespace Discord.BotABordelV2
 {
@@ -7,11 +8,18 @@ namespace Discord.BotABordelV2
     {
         private readonly ILogger<Worker> _logger;
         private readonly DiscordClient _discordClient;
+        private readonly LavalinkConfiguration _lavalinkConfiguration;
+        private readonly LavalinkExtension _lavalink;
 
-        public Worker(ILogger<Worker> logger, DiscordClient discordClient)
+        public Worker(ILogger<Worker> logger,
+                      DiscordClient discordClient,
+                      LavalinkConfiguration lavalinkConfiguration,
+                      LavalinkExtension lavalink)
         {
             _logger = logger;
             _discordClient = discordClient;
+            _lavalinkConfiguration = lavalinkConfiguration;
+            _lavalink = lavalink;
         }
 
         public override async Task StartAsync(CancellationToken cancellationToken)
@@ -21,6 +29,7 @@ namespace Discord.BotABordelV2
 
             await _discordClient.ConnectAsync();
             _logger.LogInformation("Discord Client connected");
+            await _lavalink.ConnectAsync(_lavalinkConfiguration);
         }
 
         private async Task OnMessageCreated(DiscordClient sender, MessageCreateEventArgs args)

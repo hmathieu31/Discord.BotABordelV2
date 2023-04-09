@@ -1,8 +1,11 @@
 using Discord.BotABordelV2.Commands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.Lavalink;
+using DSharpPlus.Net;
 using DSharpPlus.SlashCommands;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Discord.BotABordelV2
 {
@@ -27,10 +30,30 @@ namespace Discord.BotABordelV2
                             StringPrefixes = new[] { "!" }
                         });
                         var slash = discordClient.UseSlashCommands();
+
                         commands.RegisterCommands(Assembly.GetExecutingAssembly());
                         slash.RegisterCommands(Assembly.GetExecutingAssembly());
 
                         return discordClient;
+                    });
+                    services.AddSingleton((serviceProvider) =>
+                    {
+                        return serviceProvider.GetRequiredService<DiscordClient>().UseLavalink();
+                    });
+                    services.AddSingleton((serviceProvider) =>
+                    {
+                        var endpoint = new ConnectionEndpoint
+                        {
+                            Hostname = "127.0.0.1", // From your server configuration.
+                            Port = 2333 // From your server configuration
+                        };
+
+                        return new LavalinkConfiguration
+                        {
+                            Password = "youshallnotpass", // From your server configuration.
+                            RestEndpoint = endpoint,
+                            SocketEndpoint = endpoint
+                        };
                     });
                 })
                 .Build();
