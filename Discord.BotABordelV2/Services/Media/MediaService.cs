@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static Discord.BotABordelV2.Exceptions.MediaExceptions;
 
-namespace Discord.BotABordelV2.Services;
+namespace Discord.BotABordelV2.Services.Media;
 public class MediaService : IMediaService
 {
     private readonly ILogger<MediaService> _logger;
@@ -18,7 +18,7 @@ public class MediaService : IMediaService
     public MediaService(ILogger<MediaService> logger, LavalinkExtension lava)
     {
         _logger = logger;
-        this._lava = lava;
+        _lava = lava;
     }
 
     public async Task<string> PlayTrackAsync(string track, DiscordChannel channel)

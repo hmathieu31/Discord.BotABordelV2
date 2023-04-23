@@ -6,21 +6,16 @@ public class DiscordBot
 
     public bool LogUnknownEvents { get; set; }
 
-    public EntrancesEvents EntrancesEvents { get; set; } = null!;
+    public List<EntrancesEvent> EntrancesEvents { get; set; } = null!;
 
     public string Token { get; set; } = null!;
 }
 
-public class EntrancesEvents
+public class EntrancesEvent
 {
-    public WideRatio WideRatio { get; set; } = null!;
-}
-
-public class WideRatio
-{
-    public string TrackUrl { get; set; } = null!;
+    public string Name { get; set; } = null!;
 
     public string TrackFilePath { get; set; } = null!;
 
-    public ulong RatioId { get; set; }
+    public ulong UserId { get; set; }
 }

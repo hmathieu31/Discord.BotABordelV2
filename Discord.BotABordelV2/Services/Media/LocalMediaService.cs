@@ -5,7 +5,7 @@ using DSharpPlus.VoiceNext;
 using MP3Sharp;
 using static Discord.BotABordelV2.Exceptions.MediaExceptions;
 
-namespace Discord.BotABordelV2.Services;
+namespace Discord.BotABordelV2.Services.Media;
 
 public class LocalMediaService : ILocalMediaService
 {

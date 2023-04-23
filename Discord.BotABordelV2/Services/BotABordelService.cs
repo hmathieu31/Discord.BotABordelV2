@@ -9,13 +9,13 @@ public class BotABordelService : IHostedService
 {
     private readonly ILogger<BotABordelService> _logger;
     private readonly DiscordClient _discordClient;
-    private readonly IWideRatioService _wideRatioService;
+    private readonly IGrandEntranceService _wideRatioService;
     private readonly LavalinkExtension _lavalink;
     private readonly LavalinkConfiguration _lavalinkConfiguration;
 
     public BotABordelService(ILogger<BotABordelService> logger,
                              DiscordClient discordClient,
-                             IWideRatioService wideRatioService,
+                             IGrandEntranceService wideRatioService,
                              LavalinkExtension lavalink,
                              LavalinkConfiguration lavalinkConfiguration)
     {
@@ -49,7 +49,7 @@ public class BotABordelService : IHostedService
         try
         {
             Thread.Sleep(500);
-            _ = _wideRatioService.TriggerWideRatioEventAsync(args);
+            _ = _wideRatioService.TriggerCustomEntranceScenarioAsync(args);
         }
         catch (Exception ex)
         {
