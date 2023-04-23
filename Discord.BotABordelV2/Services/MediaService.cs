@@ -13,28 +13,20 @@ namespace Discord.BotABordelV2.Services;
 public class MediaService : IMediaService
 {
     private readonly ILogger<MediaService> _logger;
+    private readonly LavalinkExtension _lava;
 
-    public MediaService(ILogger<MediaService> logger)
+    public MediaService(ILogger<MediaService> logger, LavalinkExtension lava)
     {
         _logger = logger;
+        this._lava = lava;
     }
 
-    public bool IsConnectedToGuild(LavalinkExtension lava, DiscordGuild discordGuild)
+    public async Task<string> PlayTrackAsync(string track, DiscordChannel channel)
     {
-        var node = lava.ConnectedNodes.Values.First()
-            ?? throw new InvalidOperationException("Not connected to a lava node");
-
-        return node.GetGuildConnection(discordGuild) is not null;
-    }
-
-    public async Task<string> PlayTrackAsync(LavalinkExtension lava, string track, DiscordChannel channel)
-    {
-        if (lava is null)
-            throw new ArgumentNullException(nameof(lava));
         if (string.IsNullOrEmpty(track))
             throw new ArgumentException($"'{nameof(track)}' cannot be null or empty.", nameof(track));
 
-        var node = lava.ConnectedNodes.Values.First()
+        var node = _lava.ConnectedNodes.Values.First()
             ?? throw new InvalidOperationException("Not connected to a lava node");
 
         var conn = node.GetGuildConnection(channel.Guild);
@@ -70,7 +62,7 @@ public class MediaService : IMediaService
 {foundTrack.Uri}";
     }
 
-    private Task JoinChannel(DiscordChannel channel, LavalinkNodeConnection node)
+    private async Task JoinChannel(DiscordChannel channel, LavalinkNodeConnection node)
     {
         if (channel.Type is not DSharpPlus.ChannelType.Voice)
             throw new InvalidChannelTypeException(DSharpPlus.ChannelType.Voice);
@@ -78,8 +70,7 @@ public class MediaService : IMediaService
         try
         {
 
-            _ = node.ConnectAsync(channel);
-            return Task.CompletedTask;
+            await channel.ConnectAsync(node);
         }
         catch (Exception ex)
         {

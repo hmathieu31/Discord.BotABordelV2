@@ -10,23 +10,15 @@ namespace Discord.BotABordelV2.Commands;
 public class MusicCommands : ApplicationCommandModule
 {
     private readonly IMediaService _mediaService;
-    private readonly ILocalMediaService _localMediaService;
-    private readonly IConfiguration _configuration;
 
-    public MusicCommands(IMediaService mediaService,
-                         ILocalMediaService localMediaService,
-                         IConfiguration configuration)
+    public MusicCommands(IMediaService mediaService)
     {
         _mediaService = mediaService;
-        _localMediaService = localMediaService;
-        _configuration = configuration;
     }
 
     [SlashCommand("play", "Play a song")]
     public async Task Play(InteractionContext ctx, [Option("song", "The song to play")][RemainingText] string song)
     {
-        var lava = ctx.Client.GetLavalink();
-
         var channel = ctx.Member.VoiceState?.Channel;
         string response;
         if (channel is null)
@@ -35,7 +27,7 @@ public class MusicCommands : ApplicationCommandModule
         }
         else
         {
-            response = await _mediaService.PlayTrackAsync(lava, song, channel);
+            response = await _mediaService.PlayTrackAsync(song, channel);
         }
 
         await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,

@@ -26,8 +26,8 @@ namespace Discord.BotABordelV2
                     services.AddHostedService<BotABordelService>()
                             .AddDiscordClient()
                             .AddLavalink()
-                            .AddSingleton<IMediaService, MediaService>()
-                            .AddSingleton<ILocalMediaService, LocalMediaService>()
+                            .AddTransient<IMediaService, MediaService>()
+                            .AddTransient<ILocalMediaService, LocalMediaService>()
                             .AddSingleton<IWideRatioService, WideRatioService>();
                 })
                 .UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration))
@@ -43,7 +43,8 @@ namespace Discord.BotABordelV2
                 var configuration = serviceProvider.GetRequiredService<IConfiguration>();
                 var discordClient = new DiscordClient(new DiscordConfiguration
                 {
-                    Token = configuration["DiscordBot:Token"],
+                    Token = configuration["DiscordBot:Token"] 
+                        ?? throw new InvalidOperationException("Discord Bot token is undefined"),
                     TokenType = TokenType.Bot,
                     Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents,
                     LoggerFactory = new LoggerFactory().AddSerilog(),

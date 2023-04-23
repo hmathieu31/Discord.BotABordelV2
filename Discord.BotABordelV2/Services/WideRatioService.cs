@@ -1,13 +1,10 @@
 ﻿using Discord.BotABordelV2.Interfaces;
-using DSharpPlus;
 using DSharpPlus.EventArgs;
 
 namespace Discord.BotABordelV2.Services;
 
 public class WideRatioService : IWideRatioService
 {
-    private readonly string _WIDE_RATIO_URL;
-
     private readonly ulong _RATIO_ID;
 
     private readonly string _WIDE_RATIO_TRACK;
@@ -22,8 +19,6 @@ public class WideRatioService : IWideRatioService
     {
         _mediaService = mediaService;
         _logger = logger;
-        _WIDE_RATIO_URL = configuration["WideRatio:TrackUrl"]
-            ?? throw new InvalidOperationException("The track URL must be specified");
         _RATIO_ID = configuration.GetValue<ulong>("WideRatio:RatioId");
         _WIDE_RATIO_TRACK = configuration.GetValue<string>("WideRatio:TrackFilePath")
             ?? throw new InvalidOperationException("The Trackfile path must be defined in appsettings");
@@ -43,12 +38,15 @@ public class WideRatioService : IWideRatioService
         return true;
     }
 
-    public async Task TriggerWideRatioEventAsync(DiscordClient sender, VoiceStateUpdateEventArgs args)
+    public async Task TriggerWideRatioEventAsync(VoiceStateUpdateEventArgs args)
     {
         if (args is null)
             throw new ArgumentNullException(nameof(args));
 
         if (ShouldTriggerWideRatioEvent(args))
-            await _mediaService.PlayTrackAsync(sender, _WIDE_RATIO_TRACK, args.After.Channel);
+        {
+            _logger.LogDebug("Starting Grand Entrace");
+            await _mediaService.PlayTrackAsync(_WIDE_RATIO_TRACK, args.After.Channel);
+        }
     }
 }

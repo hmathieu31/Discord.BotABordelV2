@@ -49,7 +49,7 @@ public class BotABordelService : IHostedService
         try
         {
             Thread.Sleep(500);
-            _ = _wideRatioService.TriggerWideRatioEventAsync(sender, args);
+            _ = _wideRatioService.TriggerWideRatioEventAsync(args);
         }
         catch (Exception ex)
         {
