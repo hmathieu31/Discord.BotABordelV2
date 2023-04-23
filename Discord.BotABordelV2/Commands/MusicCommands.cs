@@ -112,24 +112,4 @@ public class MusicCommands : ApplicationCommandModule
                                             new DiscordInteractionResponseBuilder()
                                                 .WithContent($"Resumed {conn.CurrentState.CurrentTrack.Title}"));
     }
-
-    private async Task JoinCurrentChannel(InteractionContext ctx)
-    {
-        var lava = ctx.Client.GetLavalink();
-        var channel = ctx.Member.VoiceState?.Channel
-            ?? throw new InvalidOperationException($"User {ctx.Member.DisplayName} was not connected into a voice channel when calling command");
-
-        if (!lava.ConnectedNodes.Any())
-        {
-            await ctx.CreateResponseAsync("The Lavalink connection is not established");
-            return;
-        }
-
-        var node = lava.ConnectedNodes.Values.First();
-
-        if (channel.Type != ChannelType.Voice)
-            throw new InvalidOperationException($"User {ctx.Member.DisplayName} was not connected into a voice channel when calling command");
-
-        await node.ConnectAsync(channel);
-    }
 }
