@@ -7,21 +7,18 @@ namespace Discord.BotABordelV2.Services;
 public class BotABordelService : IHostedService
 {
     private readonly ILogger<BotABordelService> _logger;
-    private readonly IHostApplicationLifetime _lifetime;
     private readonly DiscordClient _discordClient;
     private readonly IWideRatioService _wideRatioService;
     private readonly LavalinkExtension _lavalink;
     private readonly LavalinkConfiguration _lavalinkConfiguration;
 
     public BotABordelService(ILogger<BotABordelService> logger,
-                             IHostApplicationLifetime lifetime,
                              DiscordClient discordClient,
                              IWideRatioService wideRatioService,
                              LavalinkExtension lavalink,
                              LavalinkConfiguration lavalinkConfiguration)
     {
         _logger = logger;
-        _lifetime = lifetime;
         _discordClient = discordClient;
         _wideRatioService = wideRatioService;
         _lavalink = lavalink;

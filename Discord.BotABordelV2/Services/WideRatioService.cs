@@ -12,21 +12,19 @@ namespace Discord.BotABordelV2.Services;
 public class WideRatioService : IWideRatioService
 {
     public WideRatioService(IMediaService mediaService,
-                            LavalinkExtension lavalinkExtension,
                             IConfiguration configuration,
                             ILogger<WideRatioService> logger)
     {
         _mediaService = mediaService;
-        _lavalinkExtension = lavalinkExtension;
         _logger = logger;
         _WIDE_RATIO_URL = configuration["WideRatio:TrackUrl"]
             ?? throw new InvalidOperationException("The track URL must be specified");
     }
 
-    private const long _RATIO_ID = 202378979020111872;
+    private const long _RATIO_ID = 202382364498722816;
+    //private const long _RATIO_ID = 254728767799296001;
     private readonly string _WIDE_RATIO_URL;
     private readonly IMediaService _mediaService;
-    private readonly LavalinkExtension _lavalinkExtension;
     private readonly ILogger<WideRatioService> _logger;
 
     public bool ShouldTriggerWideRatioEvent(VoiceStateUpdateEventArgs args)
