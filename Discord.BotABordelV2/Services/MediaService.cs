@@ -1,4 +1,5 @@
-﻿using DSharpPlus.Entities;
+﻿using Discord.BotABordelV2.Interfaces;
+using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
 using System;
 using System.Collections.Generic;

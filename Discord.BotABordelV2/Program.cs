@@ -1,11 +1,14 @@
+using Autofac.Extensions.DependencyInjection;
 using Discord.BotABordelV2.Commands;
 using Discord.BotABordelV2.Configuration;
+using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Services;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Net;
 using DSharpPlus.SlashCommands;
+using DSharpPlus.VoiceNext;
 using Serilog;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -24,6 +27,7 @@ namespace Discord.BotABordelV2
                             .AddDiscordClient()
                             .AddLavalink()
                             .AddSingleton<IMediaService, MediaService>()
+                            .AddSingleton<ILocalMediaService, LocalMediaService>()
                             .AddSingleton<IWideRatioService, WideRatioService>();
                 })
                 .UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration))
@@ -55,6 +59,7 @@ namespace Discord.BotABordelV2
                     Services = serviceProvider
                 });
 
+                discordClient.UseVoiceNext();
                 commands.RegisterCommands(Assembly.GetExecutingAssembly());
                 slash.RegisterCommands(Assembly.GetExecutingAssembly());
 

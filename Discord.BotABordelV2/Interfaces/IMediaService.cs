@@ -1,7 +1,7 @@
 ﻿using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
 
-namespace Discord.BotABordelV2.Services;
+namespace Discord.BotABordelV2.Interfaces;
 
 public interface IMediaService
 {

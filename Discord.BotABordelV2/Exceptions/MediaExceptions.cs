@@ -31,4 +31,16 @@ public class MediaExceptions
 
         public ChannelType RequiredChannelType { get; }
     }
+
+
+    [Serializable]
+    public class NullChannelConnectionException : Exception
+    {
+        public NullChannelConnectionException() { }
+        public NullChannelConnectionException(string message) : base(message) { }
+        public NullChannelConnectionException(string message, Exception inner) : base(message, inner) { }
+        protected NullChannelConnectionException(
+          System.Runtime.Serialization.SerializationInfo info,
+          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+    }
 }

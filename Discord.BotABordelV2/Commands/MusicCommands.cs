@@ -1,4 +1,4 @@
-﻿using Discord.BotABordelV2.Services;
+﻿using Discord.BotABordelV2.Interfaces;
 using DSharpPlus;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -10,10 +10,16 @@ namespace Discord.BotABordelV2.Commands;
 public class MusicCommands : ApplicationCommandModule
 {
     private readonly IMediaService _mediaService;
+    private readonly ILocalMediaService _localMediaService;
+    private readonly IConfiguration _configuration;
 
-    public MusicCommands(IMediaService mediaService)
+    public MusicCommands(IMediaService mediaService,
+                         ILocalMediaService localMediaService,
+                         IConfiguration configuration)
     {
         _mediaService = mediaService;
+        _localMediaService = localMediaService;
+        _configuration = configuration;
     }
 
     [SlashCommand("play", "Play a song")]
@@ -111,5 +117,19 @@ public class MusicCommands : ApplicationCommandModule
         await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
                                             new DiscordInteractionResponseBuilder()
                                                 .WithContent($"Resumed {conn.CurrentState.CurrentTrack.Title}"));
+    }
+
+    [SlashCommand("debug", "Debug")]
+    public async Task Debug(InteractionContext ctx)
+    {
+        var trackPath = _configuration["WideRatio:TrackFilePath"];
+        if (trackPath is null)
+            return;
+
+        var channel = ctx.Member.VoiceState?.Channel;
+        if (channel is null)
+            return;
+
+        await _localMediaService.PlayTrackAsync(trackPath, channel);
     }
 }
