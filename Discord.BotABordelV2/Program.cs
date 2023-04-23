@@ -1,10 +1,15 @@
+using Autofac.Extensions.DependencyInjection;
 using Discord.BotABordelV2.Commands;
+using Discord.BotABordelV2.Configuration;
+using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Services;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Net;
 using DSharpPlus.SlashCommands;
+using DSharpPlus.VoiceNext;
+using Serilog;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -12,19 +17,23 @@ namespace Discord.BotABordelV2
 {
     public static class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            IHost host = Host.CreateDefaultBuilder(args)
+            await Host.CreateDefaultBuilder(args)
+                .UseConsoleLifetime()
                 .ConfigureServices((builder, services) =>
                 {
-                    services.AddHostedService<Worker>()
+                    services.AddHostedService<BotABordelService>()
                             .AddDiscordClient()
                             .AddLavalink()
-                            .AddSingleton<IMediaService, MediaService>();
+                            .AddTransient<IMediaService, MediaService>()
+                            .AddTransient<ILocalMediaService, LocalMediaService>()
+                            .AddSingleton<IWideRatioService, WideRatioService>();
                 })
-                .Build();
+                .UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration))
+                .RunConsoleAsync();
 
-            host.Run();
+            await Log.CloseAndFlushAsync();
         }
 
         private static IServiceCollection AddDiscordClient(this IServiceCollection services)
@@ -34,9 +43,13 @@ namespace Discord.BotABordelV2
                 var configuration = serviceProvider.GetRequiredService<IConfiguration>();
                 var discordClient = new DiscordClient(new DiscordConfiguration
                 {
-                    Token = configuration["DiscordBot:Token"],
+                    Token = configuration["DiscordBot:Token"] 
+                        ?? throw new InvalidOperationException("Discord Bot token is undefined"),
                     TokenType = TokenType.Bot,
-                    Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents
+                    Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents,
+                    LoggerFactory = new LoggerFactory().AddSerilog(),
+                    MinimumLogLevel = LogLevel.Trace,
+                    LogUnknownEvents = true
                 });
                 var commands = discordClient.UseCommandsNext(new CommandsNextConfiguration()
                 {
@@ -47,6 +60,7 @@ namespace Discord.BotABordelV2
                     Services = serviceProvider
                 });
 
+                discordClient.UseVoiceNext();
                 commands.RegisterCommands(Assembly.GetExecutingAssembly());
                 slash.RegisterCommands(Assembly.GetExecutingAssembly());
 
@@ -77,6 +91,14 @@ namespace Discord.BotABordelV2
                     SocketEndpoint = endpoint
                 };
             });
+
+            return services;
+        }
+
+        private static IServiceCollection AddConfiguration(this IServiceCollection services, HostBuilderContext context)
+        {
+            var section = context.Configuration.GetRequiredSection(nameof(AppSettings));
+            //section.Bind
 
             return services;
         }

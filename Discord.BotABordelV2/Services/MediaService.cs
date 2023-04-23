@@ -1,4 +1,5 @@
-﻿using DSharpPlus.Entities;
+﻿using Discord.BotABordelV2.Interfaces;
+using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
 using System;
 using System.Collections.Generic;
@@ -11,27 +12,21 @@ using static Discord.BotABordelV2.Exceptions.MediaExceptions;
 namespace Discord.BotABordelV2.Services;
 public class MediaService : IMediaService
 {
-    public MediaService()
-    {
+    private readonly ILogger<MediaService> _logger;
+    private readonly LavalinkExtension _lava;
 
+    public MediaService(ILogger<MediaService> logger, LavalinkExtension lava)
+    {
+        _logger = logger;
+        this._lava = lava;
     }
 
-    public bool IsConnectedToGuild(LavalinkExtension lava, DiscordGuild discordGuild)
+    public async Task<string> PlayTrackAsync(string track, DiscordChannel channel)
     {
-        var node = lava.ConnectedNodes.Values.First()
-            ?? throw new InvalidOperationException("Not connected to a lava node");
-
-        return node.GetGuildConnection(discordGuild) is not null;
-    }
-
-    public async Task<string> PlayTrackAsync(LavalinkExtension lava, string track, DiscordChannel channel)
-    {
-        if (lava is null)
-            throw new ArgumentNullException(nameof(lava));
         if (string.IsNullOrEmpty(track))
             throw new ArgumentException($"'{nameof(track)}' cannot be null or empty.", nameof(track));
 
-        var node = lava.ConnectedNodes.Values.First()
+        var node = _lava.ConnectedNodes.Values.First()
             ?? throw new InvalidOperationException("Not connected to a lava node");
 
         var conn = node.GetGuildConnection(channel.Guild);
@@ -72,6 +67,15 @@ public class MediaService : IMediaService
         if (channel.Type is not DSharpPlus.ChannelType.Voice)
             throw new InvalidChannelTypeException(DSharpPlus.ChannelType.Voice);
 
-        await node.ConnectAsync(channel);
+        try
+        {
+
+            await channel.ConnectAsync(node);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception while trying to join channel");
+            throw;
+        }
     }
 }
