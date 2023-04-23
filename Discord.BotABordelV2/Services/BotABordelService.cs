@@ -44,10 +44,18 @@ public class BotABordelService : IHostedService
         _logger.LogInformation("Discord Client disconnected");
     }
 
-    private async Task OnUserConnection(DiscordClient sender, VoiceStateUpdateEventArgs args)
+    private Task OnUserConnection(DiscordClient sender, VoiceStateUpdateEventArgs args)
     {
-        Thread.Sleep(500);
-        await _wideRatioService.TriggerWideRatioEventAsync(sender, args);
+        try
+        {
+            Thread.Sleep(500);
+            _ = _wideRatioService.TriggerWideRatioEventAsync(sender, args);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An Exception occured in the OnUserConnection Event");
+        }
+        return Task.CompletedTask;
     }
 
     private async Task OnMessageCreated(DiscordClient sender, MessageCreateEventArgs args)

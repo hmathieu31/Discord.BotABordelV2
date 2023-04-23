@@ -70,12 +70,21 @@ public class MediaService : IMediaService
 {foundTrack.Uri}";
     }
 
-    private async Task JoinChannel(DiscordChannel channel, LavalinkNodeConnection node)
+    private Task JoinChannel(DiscordChannel channel, LavalinkNodeConnection node)
     {
         if (channel.Type is not DSharpPlus.ChannelType.Voice)
             throw new InvalidChannelTypeException(DSharpPlus.ChannelType.Voice);
 
-        //_logger.LogDebug("Connectig to channel {@channel} with node {@node}", channel, node);
-        await node.ConnectAsync(channel);
+        try
+        {
+
+            _ = node.ConnectAsync(channel);
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception while trying to join channel");
+            throw;
+        }
     }
 }

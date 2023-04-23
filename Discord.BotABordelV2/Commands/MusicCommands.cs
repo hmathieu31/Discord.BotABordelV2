@@ -118,18 +118,4 @@ public class MusicCommands : ApplicationCommandModule
                                             new DiscordInteractionResponseBuilder()
                                                 .WithContent($"Resumed {conn.CurrentState.CurrentTrack.Title}"));
     }
-
-    [SlashCommand("debug", "Debug")]
-    public async Task Debug(InteractionContext ctx)
-    {
-        var trackPath = _configuration["WideRatio:TrackFilePath"];
-        if (trackPath is null)
-            return;
-
-        var channel = ctx.Member.VoiceState?.Channel;
-        if (channel is null)
-            return;
-
-        await _localMediaService.PlayTrackAsync(trackPath, channel);
-    }
 }

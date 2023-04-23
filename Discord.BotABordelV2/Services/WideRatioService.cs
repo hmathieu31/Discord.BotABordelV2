@@ -1,41 +1,40 @@
 ﻿using Discord.BotABordelV2.Interfaces;
 using DSharpPlus;
-using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
-using DSharpPlus.Lavalink;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Discord.BotABordelV2.Services;
+
 public class WideRatioService : IWideRatioService
 {
-    public WideRatioService(ILocalMediaService mediaService,
-                            IConfiguration configuration,
-                            ILogger<WideRatioService> logger)
+    private readonly string _WIDE_RATIO_URL;
+
+    private readonly ulong _RATIO_ID;
+
+    private readonly string _WIDE_RATIO_TRACK;
+
+    private readonly ILocalMediaService _mediaService;
+
+    private readonly ILogger<WideRatioService> _logger;
+
+    public WideRatioService(IConfiguration configuration,
+                                                ILogger<WideRatioService> logger,
+                            ILocalMediaService mediaService)
     {
         _mediaService = mediaService;
         _logger = logger;
-        _configuration = configuration;
         _WIDE_RATIO_URL = configuration["WideRatio:TrackUrl"]
             ?? throw new InvalidOperationException("The track URL must be specified");
+        _RATIO_ID = configuration.GetValue<ulong>("WideRatio:RatioId");
+        _WIDE_RATIO_TRACK = configuration.GetValue<string>("WideRatio:TrackFilePath")
+            ?? throw new InvalidOperationException("The Trackfile path must be defined in appsettings");
     }
-
-    private const long _RATIO_ID = 202382364498722816;
-    //private const long _RATIO_ID = 254728767799296001;
-    private readonly string _WIDE_RATIO_URL;
-    private readonly ILocalMediaService _mediaService;
-    private readonly ILogger<WideRatioService> _logger;
-    private readonly IConfiguration _configuration;
 
     public bool ShouldTriggerWideRatioEvent(VoiceStateUpdateEventArgs args)
     {
         if (args.After.Channel is null) // If the user did not connected to a channel
             return false;
 
-        if (args.After.Channel.Users.Count < 2) // If the channel is empty or there is only Aroty
+        if (args.After.Channel.Users.Count < 1) // If the channel is empty or there is only Aroty
             return false;
 
         if (args.User.Id != _RATIO_ID) // If the connecting user is not Aroty
@@ -49,13 +48,7 @@ public class WideRatioService : IWideRatioService
         if (args is null)
             throw new ArgumentNullException(nameof(args));
 
-        var trackPath = _configuration["WideRatio:TrackFilePath"];
-        if (trackPath is null)
-            return;
-
-
         if (ShouldTriggerWideRatioEvent(args))
-            await _mediaService.PlayTrackAsync(trackPath, args.After.Channel);
-
+            await _mediaService.PlayTrackAsync(sender, _WIDE_RATIO_TRACK, args.After.Channel);
     }
 }
