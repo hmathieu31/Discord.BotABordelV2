@@ -1,8 +1,9 @@
-﻿using DSharpPlus.Entities;
+﻿using DSharpPlus;
+using DSharpPlus.Entities;
 
 namespace Discord.BotABordelV2.Interfaces;
 
 public interface ILocalMediaService
 {
-    Task PlayTrackAsync(string trackPath, DiscordChannel channel);
+    Task PlayTrackAsync(DiscordClient client, string trackPath, DiscordChannel channel);
 }
