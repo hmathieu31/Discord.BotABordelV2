@@ -51,7 +51,7 @@ public class GrandEntrancesService : IGrandEntranceService
         if (args.After.Channel is null) // If the user did not connected to a channel
             return false;
 
-        if (args.After.Channel.Users.Count < _MINIMUM_CONNECTED_MEMBERS) // If the channel is empty or there is only Aroty
+        if (args.After.Channel.Users.Count < _MINIMUM_CONNECTED_MEMBERS)
             return false;
 
         return true;

@@ -22,6 +22,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Remove="Resources\chewinggum.mp3" />
       <None Remove="Resources\thenegociator.mp3" />
       <None Remove="Resources\wide.mp3" />
     </ItemGroup>
@@ -51,6 +52,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Resource Include="Resources\chewinggum.mp3">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Resource>
       <Resource Include="Resources\thenegociator.mp3">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Resource>
