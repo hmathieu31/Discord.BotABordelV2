@@ -1,5 +1,3 @@
-using Autofac.Extensions.DependencyInjection;
-using Discord.BotABordelV2.Commands;
 using Discord.BotABordelV2.Configuration;
 using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Services;
@@ -9,9 +7,9 @@ using DSharpPlus.Lavalink;
 using DSharpPlus.Net;
 using DSharpPlus.SlashCommands;
 using DSharpPlus.VoiceNext;
+using Microsoft.Extensions.Options;
 using Serilog;
 using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace Discord.BotABordelV2
 {
@@ -24,6 +22,7 @@ namespace Discord.BotABordelV2
                 .ConfigureServices((builder, services) =>
                 {
                     services.AddHostedService<BotABordelService>()
+                            .AddDiscordBotOptions(builder)
                             .AddDiscordClient()
                             .AddLavalink()
                             .AddTransient<IMediaService, MediaService>()
@@ -40,11 +39,10 @@ namespace Discord.BotABordelV2
         {
             services.AddSingleton((serviceProvider) =>
             {
-                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+                var configuration = serviceProvider.GetRequiredService<IOptions<DiscordBot>>().Value;
                 var discordClient = new DiscordClient(new DiscordConfiguration
                 {
-                    Token = configuration["DiscordBot:Token"] 
-                        ?? throw new InvalidOperationException("Discord Bot token is undefined"),
+                    Token = configuration.Token,
                     TokenType = TokenType.Bot,
                     Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents,
                     LoggerFactory = new LoggerFactory().AddSerilog(),
@@ -78,15 +76,16 @@ namespace Discord.BotABordelV2
             });
             services.AddSingleton((serviceProvider) =>
             {
+                var options = serviceProvider.GetRequiredService<IOptions<Lavalink>>().Value;
                 var endpoint = new ConnectionEndpoint
                 {
-                    Hostname = "127.0.0.1", // From your server configuration.
-                    Port = 2333 // From your server configuration
+                    Hostname = options.Host, // From your server configuration.
+                    Port = options.Port // From your server configuration
                 };
 
                 return new LavalinkConfiguration
                 {
-                    Password = "youshallnotpass", // From your server configuration.
+                    Password = options.Password, // From your server configuration.
                     RestEndpoint = endpoint,
                     SocketEndpoint = endpoint
                 };
@@ -95,10 +94,16 @@ namespace Discord.BotABordelV2
             return services;
         }
 
-        private static IServiceCollection AddConfiguration(this IServiceCollection services, HostBuilderContext context)
+        private static IServiceCollection AddDiscordBotOptions(this IServiceCollection services, HostBuilderContext context)
         {
-            var section = context.Configuration.GetRequiredSection(nameof(AppSettings));
-            //section.Bind
+            var botSection = context.Configuration.GetRequiredSection("DiscordBot");
+            var lavalinkSection = context.Configuration.GetRequiredSection("Lavalink");
+
+            services.Configure<DiscordBot>(botSection)
+                    .Configure<Lavalink>(lavalinkSection);
+
+            botSection.Bind(new DiscordBot());
+            lavalinkSection.Bind(new Lavalink());
 
             return services;
         }

@@ -1,5 +1,7 @@
-﻿using Discord.BotABordelV2.Interfaces;
+﻿using Discord.BotABordelV2.Configuration;
+using Discord.BotABordelV2.Interfaces;
 using DSharpPlus.EventArgs;
+using Microsoft.Extensions.Options;
 
 namespace Discord.BotABordelV2.Services;
 
@@ -13,15 +15,14 @@ public class WideRatioService : IWideRatioService
 
     private readonly ILogger<WideRatioService> _logger;
 
-    public WideRatioService(IConfiguration configuration,
-                                                ILogger<WideRatioService> logger,
+    public WideRatioService(IOptions<DiscordBot> options,
+                            ILogger<WideRatioService> logger,
                             ILocalMediaService mediaService)
     {
         _mediaService = mediaService;
         _logger = logger;
-        _RATIO_ID = configuration.GetValue<ulong>("WideRatio:RatioId");
-        _WIDE_RATIO_TRACK = configuration.GetValue<string>("WideRatio:TrackFilePath")
-            ?? throw new InvalidOperationException("The Trackfile path must be defined in appsettings");
+        _RATIO_ID = options.Value.EntrancesEvents.WideRatio.RatioId;
+        _WIDE_RATIO_TRACK = options.Value.EntrancesEvents.WideRatio.TrackFilePath;
     }
 
     public bool ShouldTriggerWideRatioEvent(VoiceStateUpdateEventArgs args)
