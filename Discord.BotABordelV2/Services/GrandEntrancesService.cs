@@ -9,6 +9,8 @@ public class GrandEntrancesService : IGrandEntranceService
 {
     private const int _MINIMUM_CONNECTED_MEMBERS = 1;
 
+    private const int _SCENARIO_TRIGGER_PERCENT_CHANCE = 50;
+
     private readonly ILocalMediaService _localMediaService;
 
     private readonly ILogger<GrandEntrancesService> _logger;
@@ -52,6 +54,9 @@ public class GrandEntrancesService : IGrandEntranceService
             return false;
 
         if (args.After.Channel.Users.Count < _MINIMUM_CONNECTED_MEMBERS)
+            return false;
+
+        if (Random.Shared.Next(((int)Math.Ceiling(100.0 / _SCENARIO_TRIGGER_PERCENT_CHANCE))) != 1)
             return false;
 
         return true;
