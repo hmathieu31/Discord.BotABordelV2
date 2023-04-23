@@ -12,20 +12,19 @@ namespace Discord.BotABordelV2
 {
     public static class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            IHost host = Host.CreateDefaultBuilder(args)
+            await Host.CreateDefaultBuilder(args)
+                .UseConsoleLifetime()
                 .ConfigureServices((builder, services) =>
                 {
-                    services.AddHostedService<Worker>()
+                    services.AddHostedService<BotABordelService>()
                             .AddDiscordClient()
                             .AddLavalink()
                             .AddSingleton<IMediaService, MediaService>()
                             .AddSingleton<IWideRatioService, WideRatioService>();
                 })
-                .Build();
-
-            host.Run();
+                .RunConsoleAsync();
         }
 
         private static IServiceCollection AddDiscordClient(this IServiceCollection services)
