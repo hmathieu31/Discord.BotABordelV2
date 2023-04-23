@@ -55,9 +55,7 @@ public class WideRatioService : IWideRatioService
 
 
         if (ShouldTriggerWideRatioEvent(args))
-        {
-            await _mediaService.PlayTrackAsync(trackPath, args.Channel);
-            //_logger.LogInformation("{response}", response ?? "Error getting the response from PlayTrack");
-        }
+            await _mediaService.PlayTrackAsync(trackPath, args.After.Channel);
+
     }
 }
