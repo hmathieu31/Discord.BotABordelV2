@@ -1,4 +1,5 @@
-﻿using DSharpPlus;
+﻿using Discord.BotABordelV2.Services;
+using DSharpPlus;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
@@ -8,53 +9,32 @@ namespace Discord.BotABordelV2.Commands;
 
 public class MusicCommands : ApplicationCommandModule
 {
+    private readonly IMediaService _mediaService;
+
+    public MusicCommands(IMediaService mediaService)
+    {
+        _mediaService = mediaService;
+    }
+
     [SlashCommand("play", "Play a song")]
     public async Task Play(InteractionContext ctx, [Option("song", "The song to play")][RemainingText] string song)
     {
-
-
         var lava = ctx.Client.GetLavalink();
-        var node = lava.ConnectedNodes.Values.First();
 
-        var conn = node.GetGuildConnection(ctx.Member.VoiceState.Guild);
-
-        if (conn is null)
+        var channel = ctx.Member.VoiceState?.Channel;
+        string response;
+        if (channel is null)
         {
-            try
-            {
-                await JoinCurrentChannel(ctx);
-                conn = node.GetGuildConnection(ctx.Member.VoiceState.Guild);
-            }
-            catch (InvalidOperationException)
-            {
-                await ctx.CreateResponseAsync("You must be connected into a voice channel to invoke this command!");
-                return;
-            }
+            response = "You must be in a voice channel";
         }
-
-        var loadResult = await node.Rest.GetTracksAsync(song);
-
-        //If something went wrong on Lavalink's end                          
-        if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed
-
-            //or it just couldn't find anything.
-            || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
+        else
         {
-            await ctx.CreateResponseAsync($"Track search failed for {song}.");
-            return;
+            response = await _mediaService.PlayTrackAsync(lava, song, channel);
         }
-
-        var track = loadResult.Tracks.First();
-
-        await conn.PlayAsync(track);
-
-        string contentPattern =
-        $@"Playing {track.Title}
-        {track.Uri}";
 
         await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
                               new DiscordInteractionResponseBuilder()
-                                .WithContent(contentPattern));
+                                .WithContent(response));
     }
 
     [SlashCommand("stop", "Stop the currently played track")]
