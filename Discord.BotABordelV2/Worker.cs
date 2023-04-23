@@ -1,3 +1,4 @@
+using Discord.BotABordelV2.Services;
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Lavalink;
@@ -10,21 +11,25 @@ namespace Discord.BotABordelV2
         private readonly DiscordClient _discordClient;
         private readonly LavalinkConfiguration _lavalinkConfiguration;
         private readonly LavalinkExtension _lavalink;
+        private readonly IWideRatioService _wideRatioService;
 
         public Worker(ILogger<Worker> logger,
                       DiscordClient discordClient,
                       LavalinkConfiguration lavalinkConfiguration,
-                      LavalinkExtension lavalink)
+                      LavalinkExtension lavalink,
+                      IWideRatioService wideRatioService)
         {
             _logger = logger;
             _discordClient = discordClient;
             _lavalinkConfiguration = lavalinkConfiguration;
             _lavalink = lavalink;
+            _wideRatioService = wideRatioService;
         }
 
         public override async Task StartAsync(CancellationToken cancellationToken)
         {
             _discordClient.MessageCreated += OnMessageCreated;
+            _discordClient.VoiceStateUpdated += OnUserConnection;
 
 
             await _discordClient.ConnectAsync();
@@ -32,11 +37,17 @@ namespace Discord.BotABordelV2
             await _lavalink.ConnectAsync(_lavalinkConfiguration);
         }
 
+        private async Task OnUserConnection(DiscordClient sender, VoiceStateUpdateEventArgs args)
+        {
+            await _wideRatioService.TriggerWideRatioEventAsync(sender, args);
+        }
+
         private async Task OnMessageCreated(DiscordClient sender, MessageCreateEventArgs args)
         {
             if (args.Message.Content.Equals("ping"))
                 await args.Message.RespondAsync("Pong");
         }
+
 
         public override async Task StopAsync(CancellationToken cancellationToken)
         {

@@ -20,7 +20,8 @@ namespace Discord.BotABordelV2
                     services.AddHostedService<Worker>()
                             .AddDiscordClient()
                             .AddLavalink()
-                            .AddSingleton<IMediaService, MediaService>();
+                            .AddSingleton<IMediaService, MediaService>()
+                            .AddSingleton<IWideRatioService, WideRatioService>();
                 })
                 .Build();
 
