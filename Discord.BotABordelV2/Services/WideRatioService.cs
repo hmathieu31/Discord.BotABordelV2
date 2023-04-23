@@ -1,4 +1,6 @@
-﻿using DSharpPlus.EventArgs;
+﻿using DSharpPlus;
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using DSharpPlus.Lavalink;
 using System;
 using System.Collections.Generic;
@@ -49,7 +51,7 @@ public class WideRatioService : IWideRatioService
         if (ShouldTriggerWideRatioEvent(args))
         {
             var response = await _mediaService.PlayTrackAsync(sender.GetLavalink(), _WIDE_RATIO_URL, args.Channel);
-            _logger.LogInformation("{response}", response ?? "Error getting the response from PlayTrack");
+            //_logger.LogInformation("{response}", response ?? "Error getting the response from PlayTrack");
         }
     }
 }

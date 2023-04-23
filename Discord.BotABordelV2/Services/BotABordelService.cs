@@ -48,6 +48,7 @@ public class BotABordelService : IHostedService
 
     private async Task OnUserConnection(DiscordClient sender, VoiceStateUpdateEventArgs args)
     {
+        Thread.Sleep(500);
         await _wideRatioService.TriggerWideRatioEventAsync(sender, args);
     }
 

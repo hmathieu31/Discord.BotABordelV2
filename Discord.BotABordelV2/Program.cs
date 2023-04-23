@@ -1,10 +1,12 @@
 using Discord.BotABordelV2.Commands;
+using Discord.BotABordelV2.Configuration;
 using Discord.BotABordelV2.Services;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Lavalink;
 using DSharpPlus.Net;
 using DSharpPlus.SlashCommands;
+using Serilog;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -24,7 +26,10 @@ namespace Discord.BotABordelV2
                             .AddSingleton<IMediaService, MediaService>()
                             .AddSingleton<IWideRatioService, WideRatioService>();
                 })
+                .UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration))
                 .RunConsoleAsync();
+
+            await Log.CloseAndFlushAsync();
         }
 
         private static IServiceCollection AddDiscordClient(this IServiceCollection services)
@@ -36,7 +41,10 @@ namespace Discord.BotABordelV2
                 {
                     Token = configuration["DiscordBot:Token"],
                     TokenType = TokenType.Bot,
-                    Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents
+                    Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents,
+                    LoggerFactory = new LoggerFactory().AddSerilog(),
+                    MinimumLogLevel = LogLevel.Trace,
+                    LogUnknownEvents = true
                 });
                 var commands = discordClient.UseCommandsNext(new CommandsNextConfiguration()
                 {
@@ -77,6 +85,14 @@ namespace Discord.BotABordelV2
                     SocketEndpoint = endpoint
                 };
             });
+
+            return services;
+        }
+
+        private static IServiceCollection AddConfiguration(this IServiceCollection services, HostBuilderContext context)
+        {
+            var section = context.Configuration.GetRequiredSection(nameof(AppSettings));
+            //section.Bind
 
             return services;
         }

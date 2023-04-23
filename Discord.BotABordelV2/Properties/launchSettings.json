@@ -2,11 +2,11 @@
   "profiles": {
     "Discord.BotABordelV2": {
       "commandName": "Project",
-      "commandLineArgs": "java -jar Lavalink.jar",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       },
-      "dotnetRunMessages": true
+      "dotnetRunMessages": true,
+      "nativeDebugging": true
     }
   }
 }

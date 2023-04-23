@@ -11,9 +11,11 @@ using static Discord.BotABordelV2.Exceptions.MediaExceptions;
 namespace Discord.BotABordelV2.Services;
 public class MediaService : IMediaService
 {
-    public MediaService()
-    {
+    private readonly ILogger<MediaService> _logger;
 
+    public MediaService(ILogger<MediaService> logger)
+    {
+        _logger = logger;
     }
 
     public bool IsConnectedToGuild(LavalinkExtension lava, DiscordGuild discordGuild)
@@ -72,6 +74,7 @@ public class MediaService : IMediaService
         if (channel.Type is not DSharpPlus.ChannelType.Voice)
             throw new InvalidChannelTypeException(DSharpPlus.ChannelType.Voice);
 
+        //_logger.LogDebug("Connectig to channel {@channel} with node {@node}", channel, node);
         await node.ConnectAsync(channel);
     }
 }
