@@ -9,6 +9,7 @@
         <EnableMicrosoftExtensionsConfigurationBinderSourceGenerator>true</EnableMicrosoftExtensionsConfigurationBinderSourceGenerator>
         <IncludeSymbols>True</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -36,9 +37,11 @@
         <PackageReference Include="DSharpPlus.Lavalink" Version="5.0.0-nightly-01502" />
         <PackageReference Include="DSharpPlus.SlashCommands" Version="5.0.0-nightly-01502" />
         <PackageReference Include="DSharpPlus.VoiceNext" Version="5.0.0-nightly-01502" />
+        <PackageReference Include="Microsoft.AspNetCore.AzureKeyVault.HostingStartup" Version="2.0.4" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.4" />
         <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
+        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.18.1" />
         <PackageReference Include="MP3Sharp" Version="1.0.4" />
         <PackageReference Include="Serilog" Version="2.12.0" />
         <PackageReference Include="Serilog.Exceptions" Version="8.4.0" />
@@ -61,5 +64,11 @@
       <Resource Include="Resources\wide.mp3">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Resource>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Lavalink\Lavalink.jar">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 </Project>
