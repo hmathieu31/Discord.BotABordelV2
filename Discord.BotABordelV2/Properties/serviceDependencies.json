@@ -1,11 +1,12 @@
 {
   "dependencies": {
-    "secrets1": {
-      "type": "secrets"
-    },
     "secrets2": {
       "type": "secrets",
       "connectionId": "VaultUri"
+    },
+    "secrets1": {
+      "type": "secrets",
+      "connectionId": null
     }
   }
 }

@@ -40,6 +40,7 @@ public class GrandEntrancesService : IGrandEntranceService
             try
             {
                 _logger.LogDebug("Playing entrance {entrance}", eventForUser.Name);
+                _logger.LogDebug("Playing entrance {path} path", eventForUser.TrackFilePath);
                 await _localMediaService.PlayTrackAsync(eventForUser.TrackFilePath, args.After.Channel);
             }
             catch (Exception ex)

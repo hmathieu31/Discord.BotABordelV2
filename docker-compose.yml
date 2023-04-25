@@ -1,35 +1,21 @@
-version: '3.4'   
-
+version: '3.4'
 services:
-  lavalink:
-    network_mode: bridge
-    image: ghcr.io/freyacodes/lavalink:8032e3c
-    container_name: music-lavalink
-    hostname: lavalink
-    restart: unless-stopped
-    volumes:
-      - ./Lavalink/application.yaml:/opt/Lavalink/application.yaml
-    environment:
-      PORT: 2333
-      PASSWORD: youshallnotpass
-      MEMORY: 300M
-    ports:
-      - 2333:2333
-    networks:
-      - dotnet-net
-    
-
   discord.botabordelv2:
-    network_mode: bridge
-    image: ${DOCKER_REGISTRY-}discordbotabordelv2
+    image: '${DOCKER_REGISTRY-}discordbotabordelv2'
     build:
       context: .
       dockerfile: Discord.BotABordelV2/Dockerfile
-    depends_on:
-      lavalink:
-        condition: service_started
-    networks:
-      - dotnet-net
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+    volumes:
+      - '${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro'
+      - '.\Discord.BotABordelV2\Resources:/app/Resources'
 
-networks:
-  dotnet-net:
+  lavalink:
+    image: 'ghcr.io/freyacodes/lavalink:e62f868'
+    ports:
+      - '2333:2333/udp'
+      - '2333:2333'
+    environment: []
+    volumes:
+      - '.\Lavalink\application.yaml:/opt/Lavalink/application.yaml'

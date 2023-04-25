@@ -3,11 +3,8 @@
     "Docker Compose": {
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
-      "composeLaunchAction": "None",
-      "composeLaunchServiceName": "discord.botabordelv2",
       "serviceActions": {
-        "discord.botabordelv2": "StartDebugging",
-        "lavalink": "StartWithoutDebugging"
+        "discord.botabordelv2": "StartDebugging"
       }
     }
   }
