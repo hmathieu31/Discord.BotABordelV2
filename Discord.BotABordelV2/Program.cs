@@ -26,8 +26,8 @@ namespace Discord.BotABordelV2
                             .AddDiscordBotOptions(builder)
                             .AddDiscordClient()
                             .AddLavalink()
-                            .AddTransient<IMediaService, MediaService>()
-                            .AddTransient<ILocalMediaService, LocalMediaService>()
+                            .AddTransient<StreamingMediaService>()
+                            .AddTransient<LocalMediaService>()
                             .AddSingleton<IGrandEntranceService, GrandEntrancesService>();
                 })
                 .UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration))
