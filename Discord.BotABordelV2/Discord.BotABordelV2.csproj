@@ -10,16 +10,17 @@
         <IncludeSymbols>True</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <Authors>Hugo MATHIEU</Authors>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-      <Optimize>False</Optimize>
-      <DebugType>full</DebugType>
+      <Optimize>True</Optimize>
+      <DebugType>portable</DebugType>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
       <Optimize>False</Optimize>
-      <DebugType>full</DebugType>
+      <DebugType>portable</DebugType>
     </PropertyGroup>
 
     <ItemGroup>
@@ -58,11 +59,5 @@
       <Resource Include="Resources\wide.mp3">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Resource>
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Update="Lavalink\Lavalink.jar">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
     </ItemGroup>
 </Project>
