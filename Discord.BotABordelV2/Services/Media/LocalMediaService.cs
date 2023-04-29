@@ -30,7 +30,7 @@ public class LocalMediaService : MediaService
             if (!File.Exists(track))
                 throw new FileNotFoundException("Could not open find track at path", track);
 
-            var loadResult = await conn.GetTracksAsync(new Uri("https://stbotarbordelfiles.blob.core.windows.net/blob-resourcesmedia/wide.mp3"));
+            var loadResult = await conn.GetTracksAsync(new FileInfo(track));
 
             //If something went wrong on Lavalink's end                          
             if (loadResult.LoadResultType != LavalinkLoadResultType.TrackLoaded)
