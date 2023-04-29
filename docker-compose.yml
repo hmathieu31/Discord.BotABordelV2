@@ -1,23 +1,34 @@
 version: '3.4'
 services:
-  discord.botabordelv2:
+  discordbotabordelv2:
     image: 'crdiscordbotabordelv2.azurecr.io/discordbotabordelv2'
     build:
       context: .
       dockerfile: Discord.BotABordelV2/Dockerfile
     environment:
       - DOTNET_ENVIRONMENT=Production
+      - DISCORDBOT__TOKEN=${DISCORDBOT_TOKEN}
+      - LAVALINK__PASSWORD=${LAVALINK_PASSWORD}
     volumes:
-      - '${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro'
-      - '.\Discord.BotABordelV2\Resources:/app/Resources'
+      - 'azurefiles:/mount/azurefiles'
 
   lavalink:
     image: 'ghcr.io/freyacodes/lavalink:e62f868'
     ports:
-      - '2333:2333/udp'
       - '2333:2333'
-    environment: []
+    environment:
+      - SERVER_PORT=2333 # set lavalink server port
+      - LAVALINK_SERVER_PASSWORD=youshallnotpass # set password for lavalink
+      - SERVER_ADDERSS=lavalink # set lavalink server address
     volumes:
-      - '.\Lavalink\application.yaml:/opt/Lavalink/application.yaml'
-      - '.\Discord.BotABordelV2\Resources:/app/Resources'
+      - 'azurefiles:/mount/azurefiles'
 
+
+volumes:
+  azurefiles:
+        driver: azure_file
+        driver_opts:
+            share_name: 'botabordelresources'
+            storage_account_name: 'stbotabordelresources'
+             
+    

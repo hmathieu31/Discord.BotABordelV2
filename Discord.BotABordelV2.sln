@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		Lavalink\application.yaml = Lavalink\application.yaml
 		Lavalink\Lavalink.jar = Lavalink\Lavalink.jar
+		Lavalink\application.prod.yaml = Lavalink\application.prod.yaml
 	EndProjectSection
 EndProject
 Global
