@@ -1,12 +1,12 @@
 version: '3.4'
 services:
   discord.botabordelv2:
-    image: '${DOCKER_REGISTRY-}discordbotabordelv2'
+    image: 'crdiscordbotabordelv2.azurecr.io/discordbotabordelv2'
     build:
       context: .
       dockerfile: Discord.BotABordelV2/Dockerfile
     environment:
-      - DOTNET_ENVIRONMENT=Development
+      - DOTNET_ENVIRONMENT=Production
     volumes:
       - '${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro'
       - '.\Discord.BotABordelV2\Resources:/app/Resources'
