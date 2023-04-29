@@ -19,3 +19,5 @@ services:
     environment: []
     volumes:
       - '.\Lavalink\application.yaml:/opt/Lavalink/application.yaml'
+      - '.\Discord.BotABordelV2\Resources:/app/Resources'
+
