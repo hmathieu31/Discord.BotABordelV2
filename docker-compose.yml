@@ -20,6 +20,7 @@ services:
       - SERVER_PORT=2333 # set lavalink server port
       - LAVALINK_SERVER_PASSWORD=youshallnotpass # set password for lavalink
       - SERVER_ADDERSS=lavalink # set lavalink server address
+      - LAVALINK_SERVER_SOURCES_LOCAL=true # enable local source
     volumes:
       - 'azurefiles:/mount/azurefiles'
 
