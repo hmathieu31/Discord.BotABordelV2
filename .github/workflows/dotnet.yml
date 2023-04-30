@@ -3,6 +3,9 @@
 
 name: .NET
 
+env:
+  solution: Discord.BotABordelV2.sln
+
 on:
   push:
     branches: [ "master" ]
@@ -11,6 +14,7 @@ on:
 
 jobs:
   build:
+    
 
     runs-on: ubuntu-latest
 
@@ -21,8 +25,8 @@ jobs:
       with:
         dotnet-version: 7.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ./$solution
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build ./$solution --no-restore
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test ./$solution --no-build --verbosity normal
