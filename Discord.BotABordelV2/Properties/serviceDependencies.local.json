@@ -1,7 +1,16 @@
 {
   "dependencies": {
+    "secrets2": {
+      "secretStore": null,
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourcegroups/[parameters('resourceGroupName')]/providers/Microsoft.KeyVault/vaults/DiscordBotABordelV2-kv",
+      "type": "secrets.keyVault",
+      "connectionId": "VaultUri"
+    },
     "secrets1": {
-      "type": "secrets.user"
+      "secretStore": null,
+      "resourceId": null,
+      "type": "secrets.user",
+      "connectionId": null
     }
   }
 }

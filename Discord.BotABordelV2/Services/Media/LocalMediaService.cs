@@ -1,66 +1,66 @@
-﻿using Discord.BotABordelV2.Interfaces;
+﻿using Discord.BotABordelV2.Configuration;
+using Discord.BotABordelV2.Interfaces;
 using DSharpPlus;
 using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
+using DSharpPlus.Lavalink;
+using DSharpPlus.Lavalink.EventArgs;
 using DSharpPlus.VoiceNext;
 using MP3Sharp;
 using static Discord.BotABordelV2.Exceptions.MediaExceptions;
 
 namespace Discord.BotABordelV2.Services.Media;
 
-public class LocalMediaService : ILocalMediaService
+public class LocalMediaService : MediaService
 {
-    private readonly ILogger<LocalMediaService> _logger;
-    private readonly DiscordClient _client;
-    private VoiceNextConnection? _connection;
 
-    public LocalMediaService(ILogger<LocalMediaService> logger, DiscordClient client)
-    {
-        _logger = logger;
-        _client = client;
-    }
+    public LocalMediaService(ILogger<LocalMediaService> logger, LavalinkExtension lava)
+        : base(logger, lava)
+    { }
 
-    public async Task PlayTrackAsync(string trackPath, DiscordChannel channel)
+    public override async Task<string> PlayTrackAsync(string track, DiscordChannel channel)
     {
         try
         {
-            _connection = await JoinChannelAsync(channel)
+            var conn = await JoinChannelAsync(channel)
                 ?? throw new NullChannelConnectionException($"Could not connect to channel {channel}");
 
-            if (!File.Exists(trackPath))
-                throw new FileNotFoundException("Could not open find track at path", trackPath);
+            conn.PlaybackFinished += Conn_PlaybackFinished;
 
-            using var stream = new MP3Stream(trackPath);
-            var transmit = _connection.GetTransmitSink();
+            if (!File.Exists(track))
+                throw new FileNotFoundException("Could not open find track at path", track);
 
-            await stream.CopyToAsync(transmit);
+            var loadResult = await conn.GetTracksAsync(new FileInfo(track));
 
-            await _connection.WaitForPlaybackFinishAsync();
-            DisconnectChannel();
+            //If something went wrong on Lavalink's end                          
+            if (loadResult.LoadResultType != LavalinkLoadResultType.TrackLoaded)
+            {
+                throw new InvalidOperationException($"Track loading failed for track {track} - load result {loadResult.LoadResultType}");
+            }
+
+            var foundTrack = loadResult.Tracks.First()
+                ?? throw new InvalidOperationException($"Tracks is empty");
+
+            await conn.PlayAsync(foundTrack);
+            _logger.LogInformation("Playing track {track}", foundTrack.Title);
+
+            return $"Playing {foundTrack.Title}";
+
         }
         catch (InvalidChannelTypeException ex)
         {
-            _logger.LogError(ex, "Error when trying to play localtrack at {trackPath}", trackPath);
+            _logger.LogError(ex, "Error when trying to play localtrack at {track}", track);
+            return "";
         }
     }
 
-    private async Task<VoiceNextConnection> JoinChannelAsync(DiscordChannel channel)
+    private async Task Conn_PlaybackFinished(LavalinkGuildConnection sender, TrackFinishEventArgs args)
     {
-        if (channel.Type is not ChannelType.Voice)
-            throw new InvalidChannelTypeException(ChannelType.Voice);
-
-        try
-        {
-            return await channel.ConnectAsync();
-        }
-        catch (InvalidOperationException ex) when (ex.Message == "VoiceNext is already connected in this guild.")
-        {
-            _logger.LogDebug("A VoiceNext connection is already established");
-            return _client.GetVoiceNext().GetConnection(channel.Guild);
-        }
+        await DisconnectChannelAsync(sender);
     }
 
-    private void DisconnectChannel()
+    private static async Task DisconnectChannelAsync(LavalinkGuildConnection connection)
     {
-        _connection?.Dispose();
+        await connection.DisconnectAsync();
     }
 }

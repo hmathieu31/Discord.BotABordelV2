@@ -1,5 +1,6 @@
 ﻿using Discord.BotABordelV2.Configuration;
 using Discord.BotABordelV2.Interfaces;
+using Discord.BotABordelV2.Services.Media;
 using DSharpPlus.EventArgs;
 using Microsoft.Extensions.Options;
 
@@ -11,7 +12,7 @@ public class GrandEntrancesService : IGrandEntranceService
 
     private const int _SCENARIO_TRIGGER_PERCENT_CHANCE = 50;
 
-    private readonly ILocalMediaService _localMediaService;
+    private readonly IMediaService _localMediaService;
 
     private readonly ILogger<GrandEntrancesService> _logger;
 
@@ -19,7 +20,7 @@ public class GrandEntrancesService : IGrandEntranceService
 
     public GrandEntrancesService(IOptions<DiscordBot> options,
                             ILogger<GrandEntrancesService> logger,
-                            ILocalMediaService mediaService)
+                            LocalMediaService mediaService)
     {
         _localMediaService = mediaService;
         _logger = logger;
@@ -39,6 +40,8 @@ public class GrandEntrancesService : IGrandEntranceService
         {
             try
             {
+                _logger.LogDebug("Playing entrance {entrance}", eventForUser.Name);
+                _logger.LogDebug("Playing entrance {path} path", eventForUser.TrackFilePath);
                 await _localMediaService.PlayTrackAsync(eventForUser.TrackFilePath, args.After.Channel);
             }
             catch (Exception ex)

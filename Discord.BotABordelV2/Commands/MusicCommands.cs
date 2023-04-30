@@ -1,4 +1,5 @@
 ﻿using Discord.BotABordelV2.Interfaces;
+using Discord.BotABordelV2.Services.Media;
 using DSharpPlus;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -9,9 +10,9 @@ namespace Discord.BotABordelV2.Commands;
 
 public class MusicCommands : ApplicationCommandModule
 {
-    private readonly IMediaService _mediaService;
+    private readonly StreamingMediaService _mediaService;
 
-    public MusicCommands(IMediaService mediaService)
+    public MusicCommands(StreamingMediaService mediaService)
     {
         _mediaService = mediaService;
     }
