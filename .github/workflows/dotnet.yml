@@ -62,4 +62,4 @@ jobs:
           dotnet build --no-restore ./$env:solution
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
       - name: Test
-        run: dotnet test ./$solution --no-build --verbosity normal
+        run: dotnet test ./$env:solution --no-build --verbosity normal
