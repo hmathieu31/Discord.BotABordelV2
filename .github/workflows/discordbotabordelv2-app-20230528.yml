@@ -8,7 +8,7 @@ env:
   CONTAINER_APP_NAME: discordbotabordelv2-app-20230528
   CONTAINER_APP_RESOURCE_GROUP_NAME: rg-BotabordelV2CA
   CONTAINER_REGISTRY_LOGIN_SERVER: discordbotabordelv220230528141555.azurecr.io
-  DOCKER_FILE_PATH: ./Dockerfile
+  DOCKER_FILE_PATH: ./Discord.BotABordelV2/Dockerfile
   PROJECT_NAME_FOR_DOCKER: discordbotabordelv2
 jobs:
   build:
