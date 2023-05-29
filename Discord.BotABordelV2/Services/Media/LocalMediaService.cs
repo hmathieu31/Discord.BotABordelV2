@@ -18,6 +18,19 @@ public class LocalMediaService : MediaService
         : base(logger, lava)
     { }
 
+    /// <summary>
+    /// Plays the track asynchronous.
+    /// </summary>
+    /// <param name="track">The track path.</param>
+    /// <param name="channel">The channel.</param>
+    /// <returns>A message containing the played track</returns>
+    /// <exception cref="Discord.BotABordelV2.Exceptions.MediaExceptions.NullChannelConnectionException">Could not connect to channel {channel}</exception>
+    /// <exception cref="System.IO.FileNotFoundException">Could not open find track at path</exception>
+    /// <exception cref="System.InvalidOperationException">
+    /// Track loading failed for track {track} - load result {loadResult.LoadResultType}
+    /// or
+    /// Tracks is empty
+    /// </exception>
     public override async Task<string> PlayTrackAsync(string track, DiscordChannel channel)
     {
         try
