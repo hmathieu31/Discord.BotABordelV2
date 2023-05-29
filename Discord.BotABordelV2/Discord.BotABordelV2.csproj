@@ -10,6 +10,7 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <Authors>Hugo MATHIEU</Authors>
+    <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <Optimize>True</Optimize>
@@ -54,5 +55,10 @@
     <Resource Include="Resources\wide.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Resources\terrorists.mp3">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
