@@ -1,4 +1,5 @@
 ﻿using Discord.BotABordelV2.Interfaces;
+
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
 
@@ -23,12 +24,15 @@ public class StreamingMediaService : MediaService, IMediaService
             //or it just couldn't find anything.
             || loadResults.LoadResultType == LavalinkLoadResultType.NoMatches)
         {
+            _logger.LogDebug("Track not found of name", track);
+            _logger.LogDebug("LoadResults - {@results}", loadResults);
             return $"Track search failed for {track}.";
         }
 
         var foundTrack = loadResults.Tracks.First();
 
         await conn.PlayAsync(foundTrack);
+        _logger.LogInformation("Playing track - {track}", foundTrack.Title);
 
         return
  $@"Playing {foundTrack.Title}

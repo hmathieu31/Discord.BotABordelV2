@@ -1,5 +1,6 @@
 ﻿using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Services.Media;
+
 using DSharpPlus;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
@@ -10,16 +11,15 @@ namespace Discord.BotABordelV2.Commands;
 
 public class MusicCommands : ApplicationCommandModule
 {
-    private readonly StreamingMediaService _mediaService;
-
-    public MusicCommands(StreamingMediaService mediaService)
+    public MusicCommands()
     {
-        _mediaService = mediaService;
     }
 
     [SlashCommand("play", "Play a song")]
     public async Task Play(InteractionContext ctx, [Option("song", "The song to play")][RemainingText] string song)
     {
+        using var scope = ctx.Services.CreateScope();
+
         var channel = ctx.Member.VoiceState?.Channel;
         string response;
         if (channel is null)
@@ -28,7 +28,7 @@ public class MusicCommands : ApplicationCommandModule
         }
         else
         {
-            response = await _mediaService.PlayTrackAsync(song, channel);
+            response = await GetScopedStreamingService(scope).PlayTrackAsync(song, channel);
         }
 
         await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
@@ -111,4 +111,6 @@ public class MusicCommands : ApplicationCommandModule
                                             new DiscordInteractionResponseBuilder()
                                                 .WithContent($"Resumed {conn.CurrentState.CurrentTrack.Title}"));
     }
+
+    private IMediaService GetScopedStreamingService(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<StreamingMediaService>();
 }
