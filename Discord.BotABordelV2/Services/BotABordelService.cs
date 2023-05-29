@@ -1,4 +1,5 @@
 ﻿using Discord.BotABordelV2.Interfaces;
+
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Lavalink;
@@ -9,21 +10,21 @@ public class BotABordelService : IHostedService
 {
     private readonly ILogger<BotABordelService> _logger;
     private readonly DiscordClient _discordClient;
-    private readonly IGrandEntranceService _wideRatioService;
     private readonly LavalinkExtension _lavalink;
     private readonly LavalinkConfiguration _lavalinkConfiguration;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public BotABordelService(ILogger<BotABordelService> logger,
                              DiscordClient discordClient,
-                             IGrandEntranceService wideRatioService,
                              LavalinkExtension lavalink,
-                             LavalinkConfiguration lavalinkConfiguration)
+                             LavalinkConfiguration lavalinkConfiguration,
+                             IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
         _discordClient = discordClient;
-        _wideRatioService = wideRatioService;
         _lavalink = lavalink;
         _lavalinkConfiguration = lavalinkConfiguration;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -46,10 +47,11 @@ public class BotABordelService : IHostedService
 
     private Task OnUserConnection(DiscordClient sender, VoiceStateUpdateEventArgs args)
     {
+        using var scope = _scopeFactory.CreateScope();
         try
         {
             Thread.Sleep(500);
-            _ = _wideRatioService.TriggerCustomEntranceScenarioAsync(args);
+            _ = scope.ServiceProvider.GetRequiredService<IGrandEntranceService>().TriggerCustomEntranceScenarioAsync(args);
         }
         catch (Exception ex)
         {

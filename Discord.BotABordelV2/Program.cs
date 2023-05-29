@@ -40,9 +40,9 @@ public static class Program
                     .AddDiscordBotOptions(context)
                     .AddDiscordClient()
                     .AddLavalink()
-                    .AddTransient<StreamingMediaService>()
-                    .AddTransient<LocalMediaService>()
-                    .AddSingleton<IGrandEntranceService, GrandEntrancesService>();
+                    .AddScoped<StreamingMediaService>()
+                    .AddScoped<LocalMediaService>()
+                    .AddScoped<IGrandEntranceService, GrandEntrancesService>();
         });
 
         // Configure logging
@@ -79,7 +79,7 @@ public static class Program
     }
 
     /// <summary>
-    /// Adds a Discord client to the service collection.
+    /// Adds a Discord client to the service collection as Singleton.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <returns>A reference to this instance after the operation has completed.</returns>
@@ -117,7 +117,7 @@ public static class Program
     }
 
     /// <summary>
-    /// Adds Lavalink to the service collection.
+    /// Adds Lavalink to the service collection as Singleton.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <returns>A reference to this instance after the operation has completed.</returns>

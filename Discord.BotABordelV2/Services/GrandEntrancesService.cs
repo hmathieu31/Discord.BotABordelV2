@@ -18,7 +18,7 @@ public class GrandEntrancesService : IGrandEntranceService
 
     private readonly List<EntrancesEvent> _entranceEventsOptions;
 
-    public GrandEntrancesService(IOptions<DiscordBot> options,
+    public GrandEntrancesService(IOptionsSnapshot<DiscordBot> options,
                             ILogger<GrandEntrancesService> logger,
                             LocalMediaService mediaService)
     {
