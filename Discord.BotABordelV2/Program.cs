@@ -67,7 +67,9 @@ public static class Program
             {
                 var connectionString = settings.GetConnectionString("AppConfig");
                 if (connectionString is not null)
-                    options.Connect(connectionString);
+                    options.Connect(connectionString)
+                    .ConfigureRefresh(refreshOpt => 
+                        refreshOpt.Register("DiscordBot:Sentinel", true));
                 else
                     Console.WriteLine("Azure App Config was not configured");
             });
