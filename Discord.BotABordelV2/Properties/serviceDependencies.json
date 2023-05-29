@@ -7,6 +7,10 @@
     "secrets1": {
       "type": "secrets",
       "connectionId": null
+    },
+    "appConfig1": {
+      "type": "appConfig",
+      "connectionId": "AppConfig"
     }
   }
 }
