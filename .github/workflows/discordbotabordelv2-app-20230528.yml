@@ -1,8 +1,8 @@
 name: Build and deploy .NET application to container app discordbotabordelv2-app-20230528
 on:
-  push:
-    branches:
-    - 10-improve-ci-add-cd-2
+  release:
+    types: [ published ]
+
 env:
   CONTAINER_APP_CONTAINER_NAME: discordbotabordelv2
   CONTAINER_APP_NAME: discordbotabordelv2-app-20230528
@@ -28,7 +28,7 @@ jobs:
       uses: docker/build-push-action@v4
       with:
         push: true
-        tags: ${{ env.CONTAINER_REGISTRY_LOGIN_SERVER }}/${{ env.PROJECT_NAME_FOR_DOCKER }}:${{ github.sha }}
+        tags: ${{ env.CONTAINER_REGISTRY_LOGIN_SERVER }}/${{ env.PROJECT_NAME_FOR_DOCKER }}:${{ github.ref }}
         file: ${{ env.DOCKER_FILE_PATH }}
   deploy:
     runs-on: ubuntu-latest
