@@ -7,6 +7,7 @@ using Discord.BotABordelV2.Configuration;
 using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Services;
 using Discord.BotABordelV2.Services.Media;
+using Discord.BotABordelV2.Services.TrackSearch;
 
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
@@ -42,7 +43,8 @@ public static class Program
                     .AddLavalink()
                     .AddScoped<StreamingMediaService>()
                     .AddScoped<LocalMediaService>()
-                    .AddScoped<IGrandEntranceService, GrandEntrancesService>();
+                    .AddScoped<IGrandEntranceService, GrandEntrancesService>()
+                    .AddSingleton<TrackSearcherStrategy>();
         });
 
         // Configure logging
