@@ -44,7 +44,7 @@ public static class Program
                     .AddScoped<StreamingMediaService>()
                     .AddScoped<LocalMediaService>()
                     .AddScoped<IGrandEntranceService, GrandEntrancesService>()
-                    .AddSingleton<TrackSearcher>();
+                    .AddSingleton<TrackSearcherStrategy>();
         });
 
         // Configure logging

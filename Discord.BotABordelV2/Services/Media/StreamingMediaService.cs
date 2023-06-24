@@ -8,11 +8,11 @@ namespace Discord.BotABordelV2.Services.Media;
 
 public class StreamingMediaService : MediaService, IMediaService
 {
-    private readonly TrackSearcher _trackSearcher;
+    private readonly TrackSearcherStrategy _trackSearcher;
 
     public StreamingMediaService(ILogger<StreamingMediaService> logger,
                                  LavalinkExtension lava,
-                                 TrackSearcher trackSearch)
+                                 TrackSearcherStrategy trackSearch)
         : base(logger, lava)
     {
         _trackSearcher = trackSearch;
