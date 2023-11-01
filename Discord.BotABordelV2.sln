@@ -5,8 +5,6 @@ VisualStudioVersion = 17.6.33513.286
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Discord.BotABordelV2", "Discord.BotABordelV2\Discord.BotABordelV2.csproj", "{16C723F4-0E4F-4BC4-9987-7E6472DB76E3}"
 EndProject
-Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{CC5BCF8D-5E02-4E1B-96A2-90BDAE370190}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C50B4D9D-88DD-451D-8750-84562D11D035}"
 	ProjectSection(SolutionItems) = preProject
 		Lavalink\application.prod.yaml = Lavalink\application.prod.yaml
@@ -24,10 +22,6 @@ Global
 		{16C723F4-0E4F-4BC4-9987-7E6472DB76E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{16C723F4-0E4F-4BC4-9987-7E6472DB76E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{16C723F4-0E4F-4BC4-9987-7E6472DB76E3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CC5BCF8D-5E02-4E1B-96A2-90BDAE370190}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CC5BCF8D-5E02-4E1B-96A2-90BDAE370190}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CC5BCF8D-5E02-4E1B-96A2-90BDAE370190}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CC5BCF8D-5E02-4E1B-96A2-90BDAE370190}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
