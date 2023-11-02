@@ -79,32 +79,6 @@ public static class Program
     /// <returns>A reference to this instance after the operation has completed.</returns>
     private static IServiceCollection AddDiscordClient(this IServiceCollection services)
     {
-        //services.AddSingleton((serviceProvider) =>
-        //{
-        //    var configuration = serviceProvider.GetRequiredService<IOptions<DiscordBot>>().Value;
-        //    var discordClient = new DiscordClient(new DiscordConfiguration
-        //    {
-        //        Token = configuration.Token,
-        //        TokenType = TokenType.Bot,
-        //        Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents,
-        //        LoggerFactory = new LoggerFactory().AddSerilog(),
-        //        MinimumLogLevel = LogLevel.Trace,
-        //        LogUnknownEvents = true
-        //    });
-        //    var commands = discordClient.UseCommandsNext(new CommandsNextConfiguration()
-        //    {
-        //        StringPrefixes = new[] { "!" }
-        //    });
-        //    var slash = discordClient.UseSlashCommands(new SlashCommandsConfiguration
-        //    {
-        //        Services = serviceProvider
-        //    });
-
-        // discordClient.UseVoiceNext(); commands.RegisterCommands(Assembly.GetExecutingAssembly()); slash.RegisterCommands(Assembly.GetExecutingAssembly());
-
-        //    return discordClient;
-        //});
-
         services.AddSingleton(services => new DiscordSocketConfig
         {
             GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent,

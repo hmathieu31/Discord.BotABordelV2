@@ -107,7 +107,7 @@ public class BotABordelService : IHostedService
 
     private Task LogAsync(LogMessage log)
     {
-        _logger.LogDebug(log.ToString());
+        _logger.LogDebug("{msg}",log.ToString());
         return Task.CompletedTask;
     }
 }
