@@ -1,116 +1,154 @@
-﻿using Discord.BotABordelV2.Interfaces;
+﻿using Discord.BotABordelV2.Constants;
+using Discord.BotABordelV2.Models;
 using Discord.BotABordelV2.Services.Media;
+using Discord.Interactions;
 
-using DSharpPlus;
-using DSharpPlus.CommandsNext.Attributes;
-using DSharpPlus.Entities;
-using DSharpPlus.Lavalink;
-using DSharpPlus.SlashCommands;
+using System.Reflection.Emit;
+
 
 namespace Discord.BotABordelV2.Commands;
 
-public class MusicCommands : ApplicationCommandModule
+[RequireContext(ContextType.Guild)]
+public sealed class MusicCommands : InteractionModuleBase<SocketInteractionContext>
 {
-    public MusicCommands()
+    private readonly StreamingMediaService _mediaService;
+
+    public MusicCommands(StreamingMediaService mediaService)
     {
+        _mediaService = mediaService ?? throw new ArgumentNullException(nameof(mediaService));
     }
 
-    [SlashCommand("play", "Play a song")]
-    public async Task Play(InteractionContext ctx, [Option("song", "The song to play")][RemainingText] string song)
+    [SlashCommand("play", "Play a song", runMode: RunMode.Async)]
+    public async Task Play(
+        [Summary("Song", "The song to play")] string song
+        )
     {
-        using var scope = ctx.Services.CreateScope();
+        await DeferAsync();
 
-        var channel = ctx.Member.VoiceState?.Channel;
-        string response;
+        IVoiceChannel? channel = (Context.User as IGuildUser)?.VoiceChannel;
         if (channel is null)
         {
-            response = "You must be in a voice channel";
+            await FollowupAsync(MessageResponses.UserNotConnected);
+            return;
+        }
+
+        var result = await _mediaService.PlayTrackAsync(song, channel);
+        if (result.IsSuccess)
+        {
+            var response = result.Status switch
+            {
+                Models.PlayTrackStatus.Playing => $"🔈  Playing {result.Track.Title} ({result.Track.Uri})",
+                Models.PlayTrackStatus.Queued => $"🔈  Added to queue {result.Track.Title} ({result.Track.Uri})",
+                _ => throw new NotImplementedException(),
+            };
+
+            await FollowupAsync(response);
         }
         else
         {
-            response = await GetScopedStreamingService(scope).PlayTrackAsync(song, channel);
-        }
+            var error = result.Status switch
+            {
+                PlayTrackStatus.NoTrackFound => $"😖  No results.",
+                PlayTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
+                _ => MessageResponses.InternalEx
+            };
 
-        await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                              new DiscordInteractionResponseBuilder()
-                                .WithContent(response));
+            await FollowupAsync(error);
+        }
     }
 
-    [SlashCommand("stop", "Stop the currently played track")]
-    public async Task Stop(InteractionContext ctx)
+    [SlashCommand("stop", "Stop the player and clears the queue", runMode: RunMode.Async)]
+    public async Task Stop()
     {
-        var lava = ctx.Client.GetLavalink();
-        var node = lava.ConnectedNodes.Values.FirstOrDefault();
-        var conn = node?.GetGuildConnection(ctx.Member.VoiceState.Guild);
+        var channel = (Context.User as IGuildUser)?.VoiceChannel;
 
-        if (conn is null)
+        if (channel is null)
         {
-            await ctx.CreateResponseAsync("Lavalink is not connected");
+            await RespondAsync(MessageResponses.UserNotConnected);
             return;
         }
 
-        var currentTrack = conn.CurrentState.CurrentTrack;
-        if (currentTrack is null)
+        var response = (await _mediaService.StopPlayerAsync(channel)).Status switch
         {
-            await ctx.CreateResponseAsync("Nothing is playing");
-            return;
-        }
-
-        await conn.StopAsync();
-        await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                      new DiscordInteractionResponseBuilder()
-                        .WithContent($"Stopped {currentTrack.Title}"));
+            StopPlayerStatus.Stopped => "🛑  Stopped player and cleared queue",
+            StopPlayerStatus.InternalException => MessageResponses.InternalEx,
+            StopPlayerStatus.NothingPlaying => MessageResponses.NothingPlaying,
+            StopPlayerStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
+            StopPlayerStatus.PlayerNotConnected => MessageResponses.NothingPlaying,
+            _ => MessageResponses.InternalEx,
+        };
+        await RespondAsync(response);
     }
 
-    [SlashCommand("pause", "Pause the currently played track")]
-    public async Task Pause(InteractionContext ctx)
+    [SlashCommand("pause", "Pause current track", runMode: RunMode.Async)]
+    public async Task Pause()
     {
-        var lava = ctx.Client.GetLavalink();
-        var node = lava.ConnectedNodes.Values.FirstOrDefault();
-        var conn = node?.GetGuildConnection(ctx.Member.VoiceState.Guild);
-        if (conn is null)
+        var channel = (Context.User as IGuildUser)?.VoiceChannel;
+
+        if (channel is null)
         {
-            await ctx.CreateResponseAsync("Lavalink is not connected");
+            await RespondAsync(MessageResponses.UserNotConnected);
             return;
         }
 
-        var currentTrack = conn.CurrentState.CurrentTrack;
-        if (currentTrack is null)
+        var response = (await _mediaService.PauseTrackAsync(channel)).Status switch
         {
-            await ctx.CreateResponseAsync("Nothing is playing");
-            return;
-        }
+            PauseTrackStatus.Paused => "⏸️  Paused.",
+            PauseTrackStatus.NothingPlaying => MessageResponses.NothingPlaying,
+            PauseTrackStatus.InternalException => MessageResponses.InternalEx,
+            PauseTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
+            PauseTrackStatus.PlayerNotConnected => MessageResponses.NothingPlaying,
+            _ => MessageResponses.InternalEx,
+        };
 
-        await conn.PauseAsync();
-        await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                                 new DiscordInteractionResponseBuilder()
-                                                        .WithContent($"Paused {currentTrack.Title}"));
+        await RespondAsync(response);
     }
 
-    [SlashCommand("resume", "Resume the currently paused track")]
-    public async Task Resume(InteractionContext ctx)
+    [SlashCommand("resume", "Resume current paused track", runMode: RunMode.Async)]
+    public async Task Resume()
     {
-        var lava = ctx.Client.GetLavalink();
-        var node = lava.ConnectedNodes.Values.FirstOrDefault();
-        var conn = node?.GetGuildConnection(ctx.Member.VoiceState.Guild);
-        if (conn is null)
+        var channel = (Context.User as IGuildUser)?.VoiceChannel;
+
+        if (channel is null)
         {
-            await ctx.CreateResponseAsync("Lavalink is not connected");
+            await RespondAsync(MessageResponses.UserNotConnected);
             return;
         }
 
-        var currentTrack = conn.CurrentState.CurrentTrack;
-        if (currentTrack is null)
+        var response = (await _mediaService.ResumeTrackAsync(channel)).Status switch
         {
-            await ctx.CreateResponseAsync("No paused track to resume");
-            return;
-        }
-
-        await conn.ResumeAsync();
-        await ctx.CreateResponseAsync(InteractionResponseType.ChannelMessageWithSource,
-                                            new DiscordInteractionResponseBuilder()
-                                                .WithContent($"Resumed {conn.CurrentState.CurrentTrack.Title}"));
+            ResumeTrackStatus.Resumed => "⏯️  Resumed",
+            ResumeTrackStatus.PlayerNotPaused => MessageResponses.NothingPaused,
+            ResumeTrackStatus.InternalException => MessageResponses.InternalEx,
+            ResumeTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
+            ResumeTrackStatus.PlayerNotConnected => MessageResponses.NothingPaused,
+            _ => MessageResponses.InternalEx,
+        };
+        await RespondAsync(response);
     }
 
-    private IMediaService GetScopedStreamingService(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<StreamingMediaService>();
+    [SlashCommand("skip", "Skip the track currently playing", runMode: RunMode.Async)]
+    public async Task Skip()
+    {
+        var channel = (Context.User as IGuildUser)?.VoiceChannel;
+
+        if (channel is null)
+        {
+            await RespondAsync(MessageResponses.UserNotConnected);
+            return;
+        }
+
+        SkipTrackResult result = await _mediaService.SkipTrackAsync(channel);
+        var response = result.Status switch
+        {
+            SkipTrackStatus.Skipped => $"Skipped.  🔈  Now playing {result.NextTrack!.Title} ({result.NextTrack.Uri})",
+            SkipTrackStatus.FinishedQueue => "Skipped. Stopped playing because the queue is empty",
+            SkipTrackStatus.InternalException => MessageResponses.InternalEx,
+            SkipTrackStatus.NothingPlaying => MessageResponses.NothingPlaying,
+            SkipTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
+            SkipTrackStatus.PlayerNotConnected => MessageResponses.NothingPlaying,
+            _ => MessageResponses.InternalEx,
+        };
+        await RespondAsync(response);
+    }
 }

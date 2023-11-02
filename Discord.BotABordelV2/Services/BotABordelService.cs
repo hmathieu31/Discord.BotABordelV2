@@ -1,68 +1,113 @@
-﻿using Discord.BotABordelV2.Interfaces;
+﻿using Discord.BotABordelV2.Configuration;
+using Discord.BotABordelV2.Interfaces;
+using Discord.Interactions;
+using Discord.WebSocket;
 
-using DSharpPlus;
-using DSharpPlus.EventArgs;
-using DSharpPlus.Lavalink;
+using Microsoft.Extensions.Options;
+
+using System.Reflection;
 
 namespace Discord.BotABordelV2.Services;
 
 public class BotABordelService : IHostedService
 {
     private readonly ILogger<BotABordelService> _logger;
-    private readonly DiscordClient _discordClient;
-    private readonly LavalinkExtension _lavalink;
-    private readonly LavalinkConfiguration _lavalinkConfiguration;
-    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IGrandEntranceService _grandEntranceService;
+    private readonly DiscordSocketClient _discordSocketClient;
+    private readonly InteractionService _interactionService;
+    private readonly IOptions<DiscordBot> _options;
+    private readonly IServiceProvider _services;
 
     public BotABordelService(ILogger<BotABordelService> logger,
-                             DiscordClient discordClient,
-                             LavalinkExtension lavalink,
-                             LavalinkConfiguration lavalinkConfiguration,
-                             IServiceScopeFactory scopeFactory)
+                             IGrandEntranceService grandEntranceService,
+                             DiscordSocketClient discordSocketClient,
+                             InteractionService interactionService,
+                             IOptions<DiscordBot> options,
+                             IServiceProvider services)
     {
         _logger = logger;
-        _discordClient = discordClient;
-        _lavalink = lavalink;
-        _lavalinkConfiguration = lavalinkConfiguration;
-        _scopeFactory = scopeFactory;
+        _grandEntranceService = grandEntranceService;
+        _discordSocketClient = discordSocketClient;
+        _interactionService = interactionService;
+        _options = options;
+        _services = services;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _discordClient.MessageCreated += OnMessageCreated;
-        _discordClient.VoiceStateUpdated += OnUserConnection;
+        _discordSocketClient.InteractionCreated += InteractionCreated;
+        _discordSocketClient.Ready += ClientReady;
+        _discordSocketClient.Log += LogAsync;
 
-        await _discordClient.ConnectAsync();
-        _logger.LogInformation("Discord Client connected");
-        await _lavalink.ConnectAsync(_lavalinkConfiguration);
+        _discordSocketClient.UserVoiceStateUpdated += UserVoiceStateUpdated;
+
+        var token = _options.Value.Token;
+        await _discordSocketClient.LoginAsync(TokenType.Bot, token)
+                                  .ConfigureAwait(false);
+
+        await _discordSocketClient.StartAsync()
+                                  .ConfigureAwait(false);
+
+        _logger.LogInformation("Discord client stared");
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken)
+    private Task UserVoiceStateUpdated(SocketUser user, SocketVoiceState oldVoiceState, SocketVoiceState newVoiceState)
     {
-        await _discordClient.DisconnectAsync();
-        _discordClient.Dispose();
-        _lavalink.Dispose();
-        _logger.LogInformation("Discord Client disconnected");
-    }
-
-    private Task OnUserConnection(DiscordClient sender, VoiceStateUpdateEventArgs args)
-    {
-        using var scope = _scopeFactory.CreateScope();
         try
         {
-            Thread.Sleep(500);
-            _ = scope.ServiceProvider.GetRequiredService<IGrandEntranceService>().TriggerCustomEntranceScenarioAsync(args);
+            _ = _grandEntranceService.TriggerCustomEntranceScenarioAsync(user, newVoiceState);
+            return Task.CompletedTask;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An Exception occured in the OnUserConnection Event");
+            return Task.CompletedTask;
         }
-        return Task.CompletedTask;
     }
 
-    private async Task OnMessageCreated(DiscordClient sender, MessageCreateEventArgs args)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        if (args.Message.Content.Equals("ping"))
-            await args.Message.RespondAsync("Pong");
+        _discordSocketClient.InteractionCreated -= InteractionCreated;
+        _discordSocketClient.Ready -= ClientReady;
+
+        _discordSocketClient.UserVoiceStateUpdated -= UserVoiceStateUpdated;
+
+        await _discordSocketClient
+            .StopAsync()
+            .ConfigureAwait(false);
+
+        _logger.LogInformation("Discord Client disconnected");
+    }
+
+    private async Task ClientReady()
+    {
+        await _interactionService.AddModulesAsync(Assembly.GetExecutingAssembly(), _services)
+                                 .ConfigureAwait(false);
+
+        await _interactionService.RegisterCommandsToGuildAsync(_options.Value.GuildId)
+                                 .ConfigureAwait(false);
+
+    }
+
+    private async Task InteractionCreated(SocketInteraction interaction)
+    {
+        try
+        {
+            var interactionCtx = new SocketInteractionContext(_discordSocketClient, interaction);
+            await _interactionService.ExecuteCommandAsync(interactionCtx, _services);
+        }
+        catch
+        {
+            // If Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
+            // response, or at least let the user know that something went wrong during the command execution.
+            if (interaction.Type is InteractionType.ApplicationCommand)
+                await interaction.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
+        }
+    }
+
+    private Task LogAsync(LogMessage log)
+    {
+        _logger.LogDebug("{msg}",log.ToString());
+        return Task.CompletedTask;
     }
 }
