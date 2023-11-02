@@ -1,22 +1,13 @@
-using System.Diagnostics;
-using System.Reflection;
-
-using Azure.Identity;
-
 using Discord.BotABordelV2.Configuration;
+using Discord.BotABordelV2.Extensions;
 using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Services;
 using Discord.BotABordelV2.Services.Media;
-using Discord.BotABordelV2.Services.TrackSearch;
+using Discord.Interactions;
+using Discord.Rest;
+using Discord.WebSocket;
 
-using DSharpPlus;
-using DSharpPlus.CommandsNext;
-using DSharpPlus.Lavalink;
-using DSharpPlus.Net;
-using DSharpPlus.SlashCommands;
-using DSharpPlus.VoiceNext;
-
-using Microsoft.Extensions.Options;
+using Lavalink4NET.Extensions;
 
 using Serilog;
 
@@ -40,11 +31,10 @@ public static class Program
             services.AddHostedService<BotABordelService>()
                     .AddDiscordBotOptions(context)
                     .AddDiscordClient()
-                    .AddLavalink()
-                    .AddScoped<StreamingMediaService>()
-                    .AddScoped<LocalMediaService>()
-                    .AddScoped<IGrandEntranceService, GrandEntrancesService>()
-                    .AddSingleton<TrackSearcherStrategy>();
+                    .AddLavalink(context)
+                    .AddSingleton<StreamingMediaService>()
+                    .AddSingleton<LocalMediaService>()
+                    .AddSingleton<IGrandEntranceService, GrandEntrancesService>();
         });
 
         // Configure logging
@@ -55,6 +45,7 @@ public static class Program
         await Log.CloseAndFlushAsync();
     }
 
+#if !DEBUG
     /// <summary>
     /// Adds Azure App Configuration to the service collection.
     /// </summary>
@@ -70,7 +61,7 @@ public static class Program
                 var connectionString = settings.GetConnectionString("AppConfig");
                 if (connectionString is not null)
                     options.Connect(connectionString)
-                    .ConfigureRefresh(refreshOpt => 
+                    .ConfigureRefresh(refreshOpt =>
                         refreshOpt.Register("DiscordBot:Sentinel", true));
                 else
                     Console.WriteLine("Azure App Config was not configured");
@@ -79,6 +70,7 @@ public static class Program
 
         return builder;
     }
+#endif
 
     /// <summary>
     /// Adds a Discord client to the service collection as Singleton.
@@ -87,66 +79,62 @@ public static class Program
     /// <returns>A reference to this instance after the operation has completed.</returns>
     private static IServiceCollection AddDiscordClient(this IServiceCollection services)
     {
-        services.AddSingleton((serviceProvider) =>
+        //services.AddSingleton((serviceProvider) =>
+        //{
+        //    var configuration = serviceProvider.GetRequiredService<IOptions<DiscordBot>>().Value;
+        //    var discordClient = new DiscordClient(new DiscordConfiguration
+        //    {
+        //        Token = configuration.Token,
+        //        TokenType = TokenType.Bot,
+        //        Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents,
+        //        LoggerFactory = new LoggerFactory().AddSerilog(),
+        //        MinimumLogLevel = LogLevel.Trace,
+        //        LogUnknownEvents = true
+        //    });
+        //    var commands = discordClient.UseCommandsNext(new CommandsNextConfiguration()
+        //    {
+        //        StringPrefixes = new[] { "!" }
+        //    });
+        //    var slash = discordClient.UseSlashCommands(new SlashCommandsConfiguration
+        //    {
+        //        Services = serviceProvider
+        //    });
+
+        // discordClient.UseVoiceNext(); commands.RegisterCommands(Assembly.GetExecutingAssembly()); slash.RegisterCommands(Assembly.GetExecutingAssembly());
+
+        //    return discordClient;
+        //});
+
+        services.AddSingleton(services => new DiscordSocketConfig
         {
-            var configuration = serviceProvider.GetRequiredService<IOptions<DiscordBot>>().Value;
-            var discordClient = new DiscordClient(new DiscordConfiguration
-            {
-                Token = configuration.Token,
-                TokenType = TokenType.Bot,
-                Intents = DiscordIntents.AllUnprivileged | DiscordIntents.MessageContents,
-                LoggerFactory = new LoggerFactory().AddSerilog(),
-                MinimumLogLevel = LogLevel.Trace,
-                LogUnknownEvents = true
-            });
-            var commands = discordClient.UseCommandsNext(new CommandsNextConfiguration()
-            {
-                StringPrefixes = new[] { "!" }
-            });
-            var slash = discordClient.UseSlashCommands(new SlashCommandsConfiguration
-            {
-                Services = serviceProvider
-            });
-
-            discordClient.UseVoiceNext();
-            commands.RegisterCommands(Assembly.GetExecutingAssembly());
-            slash.RegisterCommands(Assembly.GetExecutingAssembly());
-
-            return discordClient;
-        });
+            GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent,
+        })
+                .AddSingleton<DiscordSocketClient>()
+                .AddSingleton<InteractionService>();
 
         return services;
     }
 
     /// <summary>
-    /// Adds Lavalink to the service collection as Singleton.
+    /// Adds Lavalink to the service collection.
     /// </summary>
     /// <param name="services">The service collection.</param>
+    /// <param name="context">The host builder context.</param>
     /// <returns>A reference to this instance after the operation has completed.</returns>
-    private static IServiceCollection AddLavalink(this IServiceCollection services)
+    private static IServiceCollection AddLavalink(this IServiceCollection services, HostBuilderContext context)
     {
-        services.AddSingleton((serviceProvider) =>
-        {
-            return serviceProvider.GetRequiredService<DiscordClient>().UseLavalink();
-        });
-        services.AddSingleton((serviceProvider) =>
-        {
-            var options = serviceProvider.GetRequiredService<IOptions<Lavalink>>().Value;
-            var endpoint = new ConnectionEndpoint
-            {
-                Hostname = options.Host, // From your server configuration.
-                Port = options.Port // From your server configuration
-            };
+        return services.AddLavalink()
+                       .ConfigureLavalink(config =>
+                       {
+                           var options = context.Configuration.GetRequiredSection("Lavalink");
 
-            return new LavalinkConfiguration
-            {
-                Password = options.Password, // From your server configuration.
-                RestEndpoint = endpoint,
-                SocketEndpoint = endpoint
-            };
-        });
-
-        return services;
+                           config.BaseAddress = new UriBuilder(
+                               "http",
+                               options.Retrieve("Host"),
+                               options.Retrieve<int>("Port")
+                               ).Uri;
+                           config.Passphrase = options.Retrieve("Password");
+                       });
     }
 
     /// <summary>

@@ -1,42 +1,43 @@
 ﻿using Discord.BotABordelV2.Interfaces;
-using Discord.BotABordelV2.Services.TrackSearch;
+using Discord.BotABordelV2.Models;
 
-using DSharpPlus.Entities;
-using DSharpPlus.Lavalink;
+using Lavalink4NET;
+using Lavalink4NET.Rest.Entities.Tracks;
+
+using Microsoft.Extensions.FileProviders;
 
 namespace Discord.BotABordelV2.Services.Media;
 
 public class StreamingMediaService : MediaService, IMediaService
 {
-    private readonly TrackSearcherStrategy _trackSearcher;
+    private readonly IAudioService _audioService;
 
     public StreamingMediaService(ILogger<StreamingMediaService> logger,
-                                 LavalinkExtension lava,
-                                 TrackSearcherStrategy trackSearch)
-        : base(logger, lava)
+                                 IAudioService audioService)
+        : base(logger, audioService)
     {
-        _trackSearcher = trackSearch;
+        _audioService = audioService;
     }
 
-    public override async Task<string> PlayTrackAsync(string track, DiscordChannel channel)
+    public override async Task<PlayTrackResult> PlayTrackAsync(string track, IVoiceChannel channel)
     {
         if (string.IsNullOrEmpty(track))
             throw new ArgumentException($"'{nameof(track)}' cannot be null or empty.", nameof(track));
 
-        var conn = await JoinChannelAsync(channel);
+        var player = await GetStandardPlayerAsync(channel)
+            ?? throw new Exceptions.MediaExceptions.NullChannelConnectionException($"Channel connection to '{channel.Name}' failed");
 
-        var foundTrack = await _trackSearcher.SearchTrackAsync(conn, track);
+        var foundTrack = await _audioService.Tracks.LoadTrackAsync(track, TrackSearchMode.YouTube);
+
         if (foundTrack is null)
         {
-            _logger.LogDebug("Track not found of name", track);
-            return $"Track search failed for {track}.";
+            _logger.LogDebug("Track not found of name '{track}'", track);
+            return new PlayTrackResult(PlayTrackStatus.NoTrackFound);
         }
 
-        await conn.PlayAsync(foundTrack);
+        var queuePos = await player.PlayAsync(foundTrack);
         _logger.LogInformation("Playing track - {track}", foundTrack.Title);
 
-        return
- $@"Playing {foundTrack.Title}
-{foundTrack.Uri}";
+        return new PlayTrackResult(foundTrack, queuePos);
     }
 }
