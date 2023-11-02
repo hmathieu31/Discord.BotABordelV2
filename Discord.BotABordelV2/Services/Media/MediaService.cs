@@ -93,6 +93,34 @@ public abstract class MediaService : IMediaService
         }
     }
 
+    public async Task<SkipTrackResult> SkipTrackAsync(IVoiceChannel channel)
+    {
+        try
+        {
+            var player = await GetStandardPlayerAsync(channel, false);
+
+            if (player is null)
+                return new SkipTrackResult(SkipTrackStatus.PlayerNotConnected);
+            
+            if (player.CurrentTrack is null)
+                return new SkipTrackResult(SkipTrackStatus.NothingPlaying);
+
+            await player.SkipAsync();
+
+            var track = player.CurrentTrack;
+
+            if (track is null)
+                return new SkipTrackResult(SkipTrackStatus.FinishedQueue);
+
+            return new SkipTrackResult(track);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception while trying to Skip");
+            return new SkipTrackResult(SkipTrackStatus.InternalException);
+        }
+    }
+
     protected async Task<IVoteLavalinkPlayer?> GetStandardPlayerAsync(IVoiceChannel channel, bool connectToChannel = true)
     {
         var playerOptions = new VoteLavalinkPlayerOptions

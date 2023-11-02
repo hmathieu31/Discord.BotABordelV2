@@ -30,6 +30,13 @@ public interface IMediaService
     Task<ResumeTrackResult> ResumeTrackAsync(IVoiceChannel channel);
 
     /// <summary>
+    /// Skips the current track in the specified voice channel.
+    /// </summary>
+    /// <param name="channel">The voice channel to skip the track in.</param>
+    /// <returns>The result of skipping the track.</returns>
+    Task<SkipTrackResult> SkipTrackAsync(IVoiceChannel channel);
+
+    /// <summary>
     /// Stops the player in the specified voice channel.
     /// </summary>
     /// <param name="channel">The voice channel to stop the player in.</param>

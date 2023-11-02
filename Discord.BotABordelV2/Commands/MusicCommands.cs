@@ -3,6 +3,8 @@ using Discord.BotABordelV2.Models;
 using Discord.BotABordelV2.Services.Media;
 using Discord.Interactions;
 
+using System.Reflection.Emit;
+
 
 namespace Discord.BotABordelV2.Commands;
 
@@ -120,6 +122,31 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
             ResumeTrackStatus.InternalException => MessageResponses.InternalEx,
             ResumeTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
             ResumeTrackStatus.PlayerNotConnected => MessageResponses.NothingPaused,
+            _ => MessageResponses.InternalEx,
+        };
+        await RespondAsync(response);
+    }
+
+    [SlashCommand("skip", "Skip the track currently playing", runMode: RunMode.Async)]
+    public async Task Skip()
+    {
+        var channel = (Context.User as IGuildUser)?.VoiceChannel;
+
+        if (channel is null)
+        {
+            await RespondAsync(MessageResponses.UserNotConnected);
+            return;
+        }
+
+        SkipTrackResult result = await _mediaService.SkipTrackAsync(channel);
+        var response = result.Status switch
+        {
+            SkipTrackStatus.Skipped => $"Skipped.  🔈  Now playing {result.NextTrack!.Title} ({result.NextTrack.Uri})",
+            SkipTrackStatus.FinishedQueue => "Skipped. Stopped playing because the queue is empty",
+            SkipTrackStatus.InternalException => MessageResponses.InternalEx,
+            SkipTrackStatus.NothingPlaying => MessageResponses.NothingPlaying,
+            SkipTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
+            SkipTrackStatus.PlayerNotConnected => MessageResponses.NothingPlaying,
             _ => MessageResponses.InternalEx,
         };
         await RespondAsync(response);
