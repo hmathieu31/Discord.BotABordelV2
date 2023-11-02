@@ -84,7 +84,7 @@ public class BotABordelService : IHostedService
         await _interactionService.AddModulesAsync(Assembly.GetExecutingAssembly(), _services)
                                  .ConfigureAwait(false);
 
-        await _interactionService.RegisterCommandsToGuildAsync(_options.Value.GuildId)
+        await _interactionService.RegisterCommandsGloballyAsync()
                                  .ConfigureAwait(false);
 
     }
