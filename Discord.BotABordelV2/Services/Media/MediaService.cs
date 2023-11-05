@@ -1,5 +1,6 @@
 ﻿using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Models;
+using Discord.BotABordelV2.Players;
 using Discord.Interactions;
 
 using Lavalink4NET;
@@ -31,7 +32,7 @@ public abstract class MediaService : IMediaService
     {
         try
         {
-            var player = await GetStandardPlayerAsync(channel, false);
+            var player = await GetPlayerAsync(channel, false);
 
             if (player is null)
                 return new StopPlayerResult(StopPlayerStatus.PlayerNotConnected);
@@ -53,7 +54,7 @@ public abstract class MediaService : IMediaService
     {
         try
         {
-            var player = await GetStandardPlayerAsync(channel, false);
+            var player = await GetPlayerAsync(channel, false);
 
             if (player is null)
                 return new PauseTrackResult(PauseTrackStatus.PlayerNotConnected);
@@ -75,7 +76,7 @@ public abstract class MediaService : IMediaService
     {
         try
         {
-            var player = await GetStandardPlayerAsync(channel, false);
+            var player = await GetPlayerAsync(channel, false);
 
             if (player is null)
                 return new ResumeTrackResult(ResumeTrackStatus.PlayerNotConnected);
@@ -97,7 +98,7 @@ public abstract class MediaService : IMediaService
     {
         try
         {
-            var player = await GetStandardPlayerAsync(channel, false);
+            var player = await GetPlayerAsync(channel, false);
 
             if (player is null)
                 return new SkipTrackResult(SkipTrackStatus.PlayerNotConnected);
@@ -121,59 +122,23 @@ public abstract class MediaService : IMediaService
         }
     }
 
-    protected async Task<IVoteLavalinkPlayer?> GetStandardPlayerAsync(IVoiceChannel channel, bool connectToChannel = true)
+    protected async Task<BotaPlayer?> GetPlayerAsync(IVoiceChannel channel, bool connectToChannel = true)
     {
         var playerOptions = new VoteLavalinkPlayerOptions
         {
             SkipThreshold = 0.66
         };
 
-        var result = await _audioService.Players.RetrieveAsync(
+        var result = await _audioService.Players.RetrieveAsync<BotaPlayer, VoteLavalinkPlayerOptions>(
             channel.Guild.Id,
             channel.Id,
-            PlayerFactory.Vote,
+            BotaPlayer.CreatePlayerAsync,
             Options.Create(playerOptions),
             new PlayerRetrieveOptions(connectToChannel ? PlayerChannelBehavior.Join : PlayerChannelBehavior.None)
             );
 
         if (!result.IsSuccess)
         {
-            _logger.LogError("Player retrieval failed with status {status}", result.Status);
-            return null;
-        }
-
-        return result.Player;
-    }
-
-    protected async Task<ILavalinkPlayer?> GetGrandEntrancePlayerAsync(IVoiceChannel channel)
-    {
-        var playerOptions = new LavalinkPlayerOptions
-        {
-            DisconnectOnStop = true,
-        };
-
-        ImmutableArray<IPlayerPrecondition> preconditions = ImmutableArray.Create(PlayerPrecondition.NotPlaying);
-
-        var result = await _audioService.Players.RetrieveAsync(
-            channel.Guild.Id,
-            channel.Id,
-            PlayerFactory.Default,
-            Options.Create(playerOptions),
-            new PlayerRetrieveOptions(
-                PlayerChannelBehavior.Join,
-                Preconditions: preconditions
-                )
-            );
-
-        if (!result.IsSuccess)
-        {
-            if (result.Status is PlayerRetrieveStatus.PreconditionFailed
-                && result.Precondition == PlayerPrecondition.NotPlaying)
-            {
-                _logger.LogInformation("The player is already playing a track");
-                return null;
-            }
-
             _logger.LogError("Player retrieval failed with status {status}", result.Status);
             return null;
         }

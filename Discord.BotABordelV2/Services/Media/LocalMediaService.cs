@@ -2,6 +2,7 @@
 
 using Lavalink4NET;
 using Lavalink4NET.Players;
+using Lavalink4NET.Players.Queued;
 using Lavalink4NET.Rest.Entities.Tracks;
 using Lavalink4NET.Tracks;
 
@@ -43,13 +44,13 @@ public class LocalMediaService : MediaService
     {
         try
         {
-            var player = await GetGrandEntrancePlayerAsync(channel);
+            var player = await GetPlayerAsync(channel);
 
             if (player is null)
                 return new PlayTrackResult(PlayTrackStatus.PlayerUnavailable);
 
             if (!File.Exists(track))
-                    throw new FileNotFoundException("Could not open find track at path", track);
+                throw new FileNotFoundException("Could not open find track at path", track);
 
             var loadedTrack = await _audioService.Tracks.LoadTrackAsync(
                 Path.GetFullPath(track),
@@ -58,16 +59,8 @@ public class LocalMediaService : MediaService
                     )
                 ) ?? throw new InvalidOperationException($"Track not found");
 
-            await player.PlayAsync(loadedTrack);
+            await player.PlayEventTrackAsync(loadedTrack);
             _logger.LogInformation("Playing track {track}", loadedTrack.Title);
-
-            while (player.State is PlayerState.Playing)
-            {
-                Thread.Sleep(1000);
-            }
-
-            await player.DisconnectAsync();
-            await player.DisposeAsync();
 
             return new PlayTrackResult(loadedTrack);
         }

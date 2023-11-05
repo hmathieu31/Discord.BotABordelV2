@@ -24,7 +24,7 @@ public class StreamingMediaService : MediaService, IMediaService
         if (string.IsNullOrEmpty(track))
             throw new ArgumentException($"'{nameof(track)}' cannot be null or empty.", nameof(track));
 
-        var player = await GetStandardPlayerAsync(channel)
+        var player = await GetPlayerAsync(channel)
             ?? throw new Exceptions.MediaExceptions.NullChannelConnectionException($"Channel connection to '{channel.Name}' failed");
 
         var foundTrack = await _audioService.Tracks.LoadTrackAsync(track, TrackSearchMode.YouTube);
