@@ -33,8 +33,9 @@ public interface IMediaService
     /// Skips the current track in the specified voice channel.
     /// </summary>
     /// <param name="channel">The voice channel to skip the track in.</param>
+    /// <param name="user">The user that requested the skip.</param>
     /// <returns>The result of skipping the track.</returns>
-    Task<SkipTrackResult> SkipTrackAsync(IVoiceChannel channel);
+    Task<SkipTrackResult> SkipTrackAsync(IVoiceChannel channel, IUser user);
 
     /// <summary>
     /// Stops the player in the specified voice channel.

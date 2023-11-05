@@ -138,7 +138,7 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
             return;
         }
 
-        SkipTrackResult result = await _mediaService.SkipTrackAsync(channel);
+        SkipTrackResult result = await _mediaService.SkipTrackAsync(channel, Context.User);
         var response = result.Status switch
         {
             SkipTrackStatus.Skipped => $"Skipped.  🔈  Now playing {result.NextTrack!.Title} ({result.NextTrack.Uri})",
@@ -147,6 +147,8 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
             SkipTrackStatus.NothingPlaying => MessageResponses.NothingPlaying,
             SkipTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
             SkipTrackStatus.PlayerNotConnected => MessageResponses.NothingPlaying,
+            SkipTrackStatus.VoteSubmitted => $"✅  Voted to skip the track. {result.VotesInfo!.Value.Percentage} % votes reached",
+            SkipTrackStatus.AlreadySubmitted => "‼️  You already voted to skip the track",
             _ => MessageResponses.InternalEx,
         };
         await RespondAsync(response);
