@@ -8,6 +8,9 @@ using Discord.Rest;
 using Discord.WebSocket;
 
 using Lavalink4NET.Extensions;
+using Lavalink4NET.InactivityTracking.Extensions;
+using Lavalink4NET.InactivityTracking.Trackers.Idle;
+using Lavalink4NET.InactivityTracking.Trackers.Users;
 
 using Serilog;
 
@@ -98,6 +101,7 @@ public static class Program
     private static IServiceCollection AddLavalink(this IServiceCollection services, HostBuilderContext context)
     {
         return services.AddLavalink()
+                       .AddInactivityTracking()
                        .ConfigureLavalink(config =>
                        {
                            var options = context.Configuration.GetRequiredSection("Lavalink");
@@ -108,6 +112,14 @@ public static class Program
                                options.Retrieve<int>("Port")
                                ).Uri;
                            config.Passphrase = options.Retrieve("Password");
+                       })
+                       .Configure<IdleInactivityTrackerOptions>(config =>
+                       {
+                           config.Timeout = TimeSpan.FromMinutes(5);
+                       })
+                       .Configure<UsersInactivityTrackerOptions>(config =>
+                       {
+                           config.Timeout = TimeSpan.FromSeconds(30);
                        });
     }
 
