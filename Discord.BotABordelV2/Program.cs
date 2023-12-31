@@ -1,10 +1,11 @@
+using Azure.Identity;
+
 using Discord.BotABordelV2.Configuration;
 using Discord.BotABordelV2.Extensions;
 using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Services;
 using Discord.BotABordelV2.Services.Media;
 using Discord.Interactions;
-using Discord.Rest;
 using Discord.WebSocket;
 
 using Lavalink4NET.Extensions;
@@ -48,32 +49,31 @@ public static class Program
         await Log.CloseAndFlushAsync();
     }
 
-#if !DEBUG
     /// <summary>
     /// Adds Azure App Configuration to the service collection.
     /// </summary>
     /// <param name="builder">The host builder object.</param>
     /// <returns>A reference to this instance after the operation has completed.</returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "IDE0051:Remove unused private members", Justification = "Used when not DEBUG")]
     private static IHostBuilder UseAzureAppConfiguration(this IHostBuilder builder)
     {
         builder.ConfigureAppConfiguration((context, cfg) =>
         {
-            var settings = cfg.Build();
             cfg.AddAzureAppConfiguration(options =>
             {
-                var connectionString = settings.GetConnectionString("AppConfig");
-                if (connectionString is not null)
-                    options.Connect(connectionString)
-                    .ConfigureRefresh(refreshOpt =>
-                        refreshOpt.Register("DiscordBot:Sentinel", true));
-                else
-                    Console.WriteLine("Azure App Config was not configured");
+                options.Connect(new Uri(Environment.GetEnvironmentVariable("AZURE_APPCONFIGURATION_ENDPOINT")
+                    ?? throw new InvalidOperationException("Required config 'AZURE_APPCONFIGURATION_ENDPOINT' not found")),
+                    CreateAzureCredentials());
             });
         });
 
         return builder;
     }
-#endif
+
+    private static DefaultAzureCredential CreateAzureCredentials() => new(new DefaultAzureCredentialOptions
+    {
+        ManagedIdentityClientId = Environment.GetEnvironmentVariable("AZURE_APPCONFIGURATION_CLIENTID")
+    });
 
     /// <summary>
     /// Adds a Discord client to the service collection as Singleton.
