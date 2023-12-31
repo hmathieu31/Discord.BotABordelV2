@@ -106,11 +106,9 @@ public static class Program
                        {
                            var options = context.Configuration.GetRequiredSection("Lavalink");
 
-                           config.BaseAddress = new UriBuilder(
-                               "http",
-                               options.Retrieve("Host"),
-                               options.Retrieve<int>("Port")
-                               ).Uri;
+                           config.BaseAddress = new Uri(
+                               $"${options.Retrieve("Host")}:${options.Retrieve<int>("Port")}"
+                               );
                            config.Passphrase = options.Retrieve("Password");
                        })
                        .Configure<IdleInactivityTrackerOptions>(config =>
