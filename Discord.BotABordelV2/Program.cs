@@ -107,9 +107,11 @@ public static class Program
                            var options = context.Configuration.GetRequiredSection("Lavalink");
 
                            config.BaseAddress = new Uri(
-                               $"${options.Retrieve("Host")}:${options.Retrieve<int>("Port")}"
+                               $"{options.Retrieve("Scheme")}://{options.Retrieve("Host")}:{options.Retrieve<int>("Port")}"
                                );
+                           config.WebSocketUri = new Uri($"ws://{options.Retrieve("Host")}:{options.Retrieve("Port")}/v4/websocket");
                            config.Passphrase = options.Retrieve("Password");
+                           config.Label = "Node";
                        })
                        .Configure<IdleInactivityTrackerOptions>(config =>
                        {

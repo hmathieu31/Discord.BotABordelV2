@@ -2,7 +2,7 @@ server: # REST and WS server
   port: 2333
   address: 127.0.0.1
   http2:
-    enabled: false # Whether to enable HTTP/2 support
+    enabled: true # Whether to enable HTTP/2 support
 spring:
   main:
     banner-mode: log
@@ -72,8 +72,8 @@ logging:
     path: ./logs/
 
   level:
-    root: DEBUG
-    lavalink: DEBUG
+    root: INFO
+    lavalink: INFO
 
   request:
     enabled: true
