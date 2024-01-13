@@ -37,8 +37,8 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
         {
             var response = result.Status switch
             {
-                Models.PlayTrackStatus.Playing => $"🔈  Playing {result.Track.Title} ({result.Track.Uri})",
-                Models.PlayTrackStatus.Queued => $"🔈  Added to queue {result.Track.Title} ({result.Track.Uri})",
+                Models.PlayTrackStatus.Playing => string.Format(MessageResponses.PlayingTrackFormat, result.Track!.Title, result.Track.Uri),
+                Models.PlayTrackStatus.Queued => string.Format(MessageResponses.QueuedTrackFormat, result.Track!.Title, result.Track.Uri),
                 _ => throw new NotImplementedException(),
             };
 
@@ -48,7 +48,7 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
         {
             var error = result.Status switch
             {
-                PlayTrackStatus.NoTrackFound => $"😖  No results.",
+                PlayTrackStatus.NoTrackFound => MessageResponses.NoResults,
                 PlayTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
                 _ => MessageResponses.InternalEx
             };
@@ -70,7 +70,7 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
 
         var response = (await _mediaService.StopPlayerAsync(channel)).Status switch
         {
-            StopPlayerStatus.Stopped => "🛑  Stopped player and cleared queue",
+            StopPlayerStatus.Stopped => MessageResponses.PlayerStopped,
             StopPlayerStatus.InternalException => MessageResponses.InternalEx,
             StopPlayerStatus.NothingPlaying => MessageResponses.NothingPlaying,
             StopPlayerStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
@@ -93,7 +93,7 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
 
         var response = (await _mediaService.PauseTrackAsync(channel)).Status switch
         {
-            PauseTrackStatus.Paused => "⏸️  Paused.",
+            PauseTrackStatus.Paused => MessageResponses.TrackPaused,
             PauseTrackStatus.NothingPlaying => MessageResponses.NothingPlaying,
             PauseTrackStatus.InternalException => MessageResponses.InternalEx,
             PauseTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
@@ -117,7 +117,7 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
 
         var response = (await _mediaService.ResumeTrackAsync(channel)).Status switch
         {
-            ResumeTrackStatus.Resumed => "⏯️  Resumed",
+            ResumeTrackStatus.Resumed => MessageResponses.TrackResumed,
             ResumeTrackStatus.PlayerNotPaused => MessageResponses.NothingPaused,
             ResumeTrackStatus.InternalException => MessageResponses.InternalEx,
             ResumeTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
@@ -141,14 +141,14 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
         SkipTrackResult result = await _mediaService.SkipTrackAsync(channel, Context.User);
         var response = result.Status switch
         {
-            SkipTrackStatus.Skipped => $"Skipped.  🔈  Now playing {result.NextTrack!.Title} ({result.NextTrack.Uri})",
-            SkipTrackStatus.FinishedQueue => "Skipped. Stopped playing because the queue is empty",
+            SkipTrackStatus.Skipped => string.Format(MessageResponses.SkippedNowPlayingFormat, result.NextTrack!.Title, result.NextTrack.Uri),
+            SkipTrackStatus.FinishedQueue => MessageResponses.SkippedFinishedQueue,
             SkipTrackStatus.InternalException => MessageResponses.InternalEx,
             SkipTrackStatus.NothingPlaying => MessageResponses.NothingPlaying,
             SkipTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
             SkipTrackStatus.PlayerNotConnected => MessageResponses.NothingPlaying,
-            SkipTrackStatus.VoteSubmitted => $"✅  Voted to skip the track. {result.VotesInfo!.Value.Percentage} % votes reached",
-            SkipTrackStatus.AlreadySubmitted => "‼️  You already voted to skip the track",
+            SkipTrackStatus.VoteSubmitted => string.Format(MessageResponses.VotedSkipFormat, result.VotesInfo!.Value.Percentage),
+            SkipTrackStatus.AlreadySubmitted => MessageResponses.AlreadyVotedSkip,
             _ => MessageResponses.InternalEx,
         };
         await RespondAsync(response);
