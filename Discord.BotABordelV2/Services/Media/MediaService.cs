@@ -26,7 +26,7 @@ public abstract class MediaService(ILogger logger,
                 return new GetQueueResult(DisplayQueueStatus.PlayerNotConnected);
 
             var queue = player.Queue;
-            if (queue.IsEmpty)
+            if (player.CurrentTrack is null && queue.IsEmpty)
                 return new GetQueueResult(DisplayQueueStatus.NothingPlaying);
 
             var queuedTracks = queue.Select((t, i) => new TrackQueueItem(t.Identifier,
