@@ -94,7 +94,7 @@ public abstract class MediaService : IMediaService
         }
     }
 
-    public async Task<SkipTrackResult> SkipTrackAsync(IVoiceChannel channel, IUser user)
+    public async Task<SkipTrackResult> SkipTrackAsync(IVoiceChannel channel, IUser user, bool forceSkip = false)
     {
         try
         {
@@ -106,7 +106,12 @@ public abstract class MediaService : IMediaService
             if (player.CurrentTrack is null)
                 return new SkipTrackResult(SkipTrackStatus.NothingPlaying);
 
-            var voteResult = await player.VoteAsync(user.Id, new UserVoteOptions());
+            var voteOptions = new UserVoteOptions
+            {
+                Factor = forceSkip ? 100 : null,
+            };
+            
+            var voteResult = await player.VoteAsync(user.Id, voteOptions);
 
             switch (voteResult)
             {

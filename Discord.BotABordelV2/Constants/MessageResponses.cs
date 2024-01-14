@@ -16,4 +16,5 @@ internal static class MessageResponses
     public const string TrackResumed = "⏯️  Resumed";
     public const string UserNotConnected = "😖  Connect to a channel to stop the music";
     public const string VotedSkipFormat = "✅  Voted to skip the track. {0} % votes reached";
+    public const string Unauthorized = "⛔ You do not have permission to use this command";
 }

@@ -5,6 +5,7 @@ using Discord.BotABordelV2.Extensions;
 using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Services;
 using Discord.BotABordelV2.Services.Media;
+using Discord.BotABordelV2.Services.Permissions;
 using Discord.Interactions;
 using Discord.WebSocket;
 
@@ -38,7 +39,8 @@ public static class Program
                     .AddLavalink(context)
                     .AddSingleton<StreamingMediaService>()
                     .AddSingleton<LocalMediaService>()
-                    .AddSingleton<IGrandEntranceService, GrandEntrancesService>();
+                    .AddSingleton<IGrandEntranceService, GrandEntrancesService>()
+                    .AddSingleton<IPermissionsService, PermissionsService>();
         });
 
         // Configure logging
@@ -133,12 +135,15 @@ public static class Program
     {
         var botSection = context.Configuration.GetRequiredSection("DiscordBot");
         var lavalinkSection = context.Configuration.GetRequiredSection("Lavalink");
+        var permissionsSection = context.Configuration.GetRequiredSection("Permissions");
 
         services.Configure<DiscordBot>(botSection)
-                .Configure<Lavalink>(lavalinkSection);
+                .Configure<Lavalink>(lavalinkSection)
+                .Configure<PermissionsOptions>(permissionsSection);
 
         botSection.Bind(new DiscordBot());
         lavalinkSection.Bind(new Lavalink());
+        permissionsSection.Bind(new PermissionsOptions());
 
         return services;
     }
