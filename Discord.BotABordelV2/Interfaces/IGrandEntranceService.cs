@@ -2,7 +2,6 @@
 
 public interface IGrandEntranceService
 {
-
     /// <summary>
     /// Triggers a custom entrance scenario for the connecting user and the next voice state.
     /// </summary>

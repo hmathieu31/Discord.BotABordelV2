@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Discord.BotABordelV2.Extensions;
 
-namespace Discord.BotABordelV2.Extensions;
 internal static class ConfigurationExtensions
 {
     public static string Retrieve(this IConfiguration configuration, string key)

@@ -1,8 +1,7 @@
 ﻿namespace Discord.BotABordelV2.Models;
+
 public class ResumeTrackResult
 {
-    public ResumeTrackStatus Status { get; }
-
     public ResumeTrackResult(ResumeTrackStatus status)
     {
         Status = status;
@@ -10,6 +9,7 @@ public class ResumeTrackResult
 
     public bool IsSuccess => Status is ResumeTrackStatus.Resumed;
 
+    public ResumeTrackStatus Status { get; }
 }
 
 public enum ResumeTrackStatus

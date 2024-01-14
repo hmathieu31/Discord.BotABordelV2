@@ -2,15 +2,15 @@
 
 public class DiscordBot
 {
+    public List<EntrancesEvent> EntrancesEvents { get; set; } = null!;
+
+    public ulong GuildId { get; set; }
+
     public string LogLevel { get; set; } = null!;
 
     public bool LogUnknownEvents { get; set; }
 
-    public List<EntrancesEvent> EntrancesEvents { get; set; } = null!;
-
     public string Token { get; set; } = null!;
-
-    public ulong GuildId { get; set; }
 }
 
 public class EntrancesEvent
