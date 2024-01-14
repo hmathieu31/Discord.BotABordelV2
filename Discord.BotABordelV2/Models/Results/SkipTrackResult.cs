@@ -1,7 +1,7 @@
 ﻿using Lavalink4NET.Players.Vote;
 using Lavalink4NET.Tracks;
 
-namespace Discord.BotABordelV2.Models;
+namespace Discord.BotABordelV2.Models.Results;
 
 public enum SkipTrackStatus
 {

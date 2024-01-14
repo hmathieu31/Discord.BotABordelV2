@@ -1,6 +1,5 @@
 ﻿using Discord.BotABordelV2.Interfaces;
-using Discord.BotABordelV2.Models;
-
+using Discord.BotABordelV2.Models.Results;
 using Lavalink4NET;
 using Lavalink4NET.Rest.Entities.Tracks;
 

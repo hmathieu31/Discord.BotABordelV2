@@ -1,6 +1,6 @@
 ﻿using Discord.BotABordelV2.Constants;
 using Discord.BotABordelV2.Interfaces;
-using Discord.BotABordelV2.Models;
+using Discord.BotABordelV2.Models.Results;
 using Discord.BotABordelV2.Services.Media;
 using Discord.Interactions;
 
@@ -62,8 +62,8 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
         {
             var response = result.Status switch
             {
-                Models.PlayTrackStatus.Playing => string.Format(MessageResponses.PlayingTrackFormat, result.Track!.Title, result.Track.Uri),
-                Models.PlayTrackStatus.Queued => string.Format(MessageResponses.QueuedTrackFormat, result.Track!.Title, result.Track.Uri),
+                PlayTrackStatus.Playing => string.Format(MessageResponses.PlayingTrackFormat, result.Track!.Title, result.Track.Uri),
+                PlayTrackStatus.Queued => string.Format(MessageResponses.QueuedTrackFormat, result.Track!.Title, result.Track.Uri),
                 _ => throw new NotImplementedException(),
             };
 
@@ -79,6 +79,72 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
             };
 
             await FollowupAsync(error);
+        }
+    }
+
+    [SlashCommand("queue", "Display queue of tracks", runMode: RunMode.Async)]
+    public async Task Queue()
+    {
+        var channel = (Context.User as IGuildUser)?.VoiceChannel;
+
+        if (channel is null)
+        {
+            await RespondAsync(MessageResponses.UserNotConnected);
+            return;
+        }
+
+        var result = await _mediaService.GetQueueAsync(channel);
+        if (result.IsSuccess)
+        {
+            List<Embed> embeds = [];
+
+            foreach (var queuedTrack in result.QueuedTracks!)
+            {
+                switch (queuedTrack.Position)
+                {
+                    case 0:
+                        embeds.Add(new EmbedBuilder()
+                            .WithTitle($"Now Playing - {queuedTrack.Title}")
+                            .WithDescription($"{queuedTrack.Uri}")
+                            .WithThumbnailUrl(queuedTrack.ThumbnailUri?.ToString())
+                            .Build());
+
+                        break;
+
+                    case 1:
+                        embeds.Add(new EmbedBuilder()
+                            .WithTitle($"Next up - {queuedTrack.Title}")
+                            .WithDescription($"{queuedTrack.Uri}")
+                            .WithThumbnailUrl(queuedTrack.ThumbnailUri?.ToString())
+                            .Build());
+
+                        break;
+
+                    default:
+                        embeds.Add(new EmbedBuilder()
+                             .WithTitle($"#{queuedTrack.Position} - {queuedTrack.Title}")
+                             .WithDescription($"{queuedTrack.Uri}")
+                             .WithThumbnailUrl(queuedTrack.ThumbnailUri?.ToString())
+                             .Build());
+
+                        break;
+                }
+            }
+
+            await RespondAsync(":notes:  Current Queue", embeds: [.. embeds]);
+        }
+        else
+        {
+            var failureResponse = result.Status switch
+            {
+                DisplayQueueStatus.InternalException => MessageResponses.InternalEx,
+                DisplayQueueStatus.NothingPlaying => MessageResponses.NothingPlaying,
+                DisplayQueueStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
+                DisplayQueueStatus.PlayerNotConnected => MessageResponses.NothingPlaying,
+                _ => MessageResponses.InternalEx,
+            };
+
+            await RespondAsync(failureResponse);
         }
     }
 

@@ -2,7 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace Discord.BotABordelV2.Models;
+namespace Discord.BotABordelV2.Models.Results;
 
 public record PlayTrackResult
 {
