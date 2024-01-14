@@ -32,6 +32,7 @@ public abstract class MediaService(ILogger logger,
             var queuedTracks = queue.Select((t, i) => new TrackQueueItem(t.Identifier,
                                                                          t.Track!.Title,
                                                                          t.Track.Uri,
+                                                                         t.Track.ArtworkUri,
                                                                          i + 1))
                                                      .ToList();
 
@@ -39,6 +40,7 @@ public abstract class MediaService(ILogger logger,
                 player.CurrentTrack!.Identifier,
                 player.CurrentTrack.Title,
                 player.CurrentTrack.Uri,
+                player.CurrentTrack.ArtworkUri,
                 0));
 
             queuedTracks = [.. queuedTracks.OrderBy(t => t.Position)];

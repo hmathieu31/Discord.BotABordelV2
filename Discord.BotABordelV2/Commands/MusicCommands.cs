@@ -4,8 +4,6 @@ using Discord.BotABordelV2.Models.Results;
 using Discord.BotABordelV2.Services.Media;
 using Discord.Interactions;
 
-using System.Text;
-
 namespace Discord.BotABordelV2.Commands;
 
 [RequireContext(ContextType.Guild)]
@@ -98,24 +96,42 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
         var result = await _mediaService.GetQueueAsync(channel);
         if (result.IsSuccess)
         {
-            var displayQueueResponseBuilder = new StringBuilder("Current Queue:");
-            displayQueueResponseBuilder.AppendLine();
+            List<Embed> embeds = [];
+
             foreach (var queuedTrack in result.QueuedTracks!)
             {
                 switch (queuedTrack.Position)
                 {
                     case 0:
-                        displayQueueResponseBuilder.AppendLine($"- **Now Playing** {queuedTrack.Title} ({queuedTrack.Uri}");
+                        embeds.Add(new EmbedBuilder()
+                            .WithTitle($"Now Playing - {queuedTrack.Title}")
+                            .WithDescription($"{queuedTrack.Uri}")
+                            .WithThumbnailUrl(queuedTrack.ThumbnailUri?.ToString())
+                            .Build());
+
                         break;
+
                     case 1:
-                        displayQueueResponseBuilder.AppendLine($"- **Next up** {queuedTrack.Title} ({queuedTrack.Uri}");
+                        embeds.Add(new EmbedBuilder()
+                            .WithTitle($"Next up - {queuedTrack.Title}")
+                            .WithDescription($"{queuedTrack.Uri}")
+                            .WithThumbnailUrl(queuedTrack.ThumbnailUri?.ToString())
+                            .Build());
+
                         break;
+
                     default:
-                        displayQueueResponseBuilder.AppendLine($"- {queuedTrack.Title} ({queuedTrack.Uri}");
+                        embeds.Add(new EmbedBuilder()
+                             .WithTitle($"#{queuedTrack.Position} - {queuedTrack.Title}")
+                             .WithDescription($"{queuedTrack.Uri}")
+                             .WithThumbnailUrl(queuedTrack.ThumbnailUri?.ToString())
+                             .Build());
+
                         break;
                 }
             }
-            await RespondAsync(displayQueueResponseBuilder.ToString());
+
+            await RespondAsync(":notes:  Current Queue", embeds: [.. embeds]);
         }
         else
         {
