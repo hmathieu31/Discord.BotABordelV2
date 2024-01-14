@@ -9,97 +9,66 @@ using System.Reflection;
 
 namespace Discord.BotABordelV2.Services;
 
-public class BotABordelService : IHostedService
+public class BotABordelService(ILogger<BotABordelService> logger,
+                         IGrandEntranceService grandEntranceService,
+                         DiscordSocketClient discordSocketClient,
+                         InteractionService interactionService,
+                         IOptions<DiscordBot> options,
+                         IServiceProvider services) : IHostedService
 {
-    private readonly ILogger<BotABordelService> _logger;
-    private readonly IGrandEntranceService _grandEntranceService;
-    private readonly DiscordSocketClient _discordSocketClient;
-    private readonly InteractionService _interactionService;
-    private readonly IOptions<DiscordBot> _options;
-    private readonly IServiceProvider _services;
-
-    public BotABordelService(ILogger<BotABordelService> logger,
-                             IGrandEntranceService grandEntranceService,
-                             DiscordSocketClient discordSocketClient,
-                             InteractionService interactionService,
-                             IOptions<DiscordBot> options,
-                             IServiceProvider services)
-    {
-        _logger = logger;
-        _grandEntranceService = grandEntranceService;
-        _discordSocketClient = discordSocketClient;
-        _interactionService = interactionService;
-        _options = options;
-        _services = services;
-    }
-
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _discordSocketClient.InteractionCreated += InteractionCreated;
-        _discordSocketClient.Ready += ClientReady;
-        _discordSocketClient.Log += LogAsync;
+        discordSocketClient.InteractionCreated += InteractionCreated;
+        discordSocketClient.Ready += ClientReady;
+        discordSocketClient.Log += LogAsync;
 
-        _discordSocketClient.UserVoiceStateUpdated += UserVoiceStateUpdated;
+        discordSocketClient.UserVoiceStateUpdated += UserVoiceStateUpdated;
 
-        var token = _options.Value.Token;
-        await _discordSocketClient.LoginAsync(TokenType.Bot, token)
+        var token = options.Value.Token;
+        await discordSocketClient.LoginAsync(TokenType.Bot, token)
                                   .ConfigureAwait(false);
 
-        await _discordSocketClient.StartAsync()
+        await discordSocketClient.StartAsync()
                                   .ConfigureAwait(false);
 
-        _logger.LogInformation("Discord client stared");
-    }
-
-    private Task UserVoiceStateUpdated(SocketUser user, SocketVoiceState oldVoiceState, SocketVoiceState newVoiceState)
-    {
-        try
-        {
-            _ = _grandEntranceService.TriggerCustomEntranceScenarioAsync(user, newVoiceState);
-            return Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An Exception occured in the OnUserConnection Event");
-            return Task.CompletedTask;
-        }
+        logger.LogInformation("Discord client stared");
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        _discordSocketClient.InteractionCreated -= InteractionCreated;
-        _discordSocketClient.Ready -= ClientReady;
+        discordSocketClient.InteractionCreated -= InteractionCreated;
+        discordSocketClient.Ready -= ClientReady;
 
-        _discordSocketClient.UserVoiceStateUpdated -= UserVoiceStateUpdated;
+        discordSocketClient.UserVoiceStateUpdated -= UserVoiceStateUpdated;
 
-        await _discordSocketClient
+        await discordSocketClient
             .StopAsync()
             .ConfigureAwait(false);
 
-        _logger.LogInformation("Discord Client disconnected");
+        logger.LogInformation("Discord Client disconnected");
     }
 
     private async Task ClientReady()
     {
-        await _interactionService.AddModulesAsync(Assembly.GetExecutingAssembly(), _services)
+        await interactionService.AddModulesAsync(Assembly.GetExecutingAssembly(), services)
                                  .ConfigureAwait(false);
 
-        await _interactionService.RegisterCommandsGloballyAsync()
+        await interactionService.RegisterCommandsGloballyAsync()
                                  .ConfigureAwait(false);
-
     }
 
     private async Task InteractionCreated(SocketInteraction interaction)
     {
         try
         {
-            var interactionCtx = new SocketInteractionContext(_discordSocketClient, interaction);
-            await _interactionService.ExecuteCommandAsync(interactionCtx, _services);
+            var interactionCtx = new SocketInteractionContext(discordSocketClient, interaction);
+            await interactionService.ExecuteCommandAsync(interactionCtx, services);
         }
         catch
         {
-            // If Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
-            // response, or at least let the user know that something went wrong during the command execution.
+            // If Slash Command execution fails it is most likely that the original interaction
+            // acknowledgement will persist. It is a good idea to delete the original response, or
+            // at least let the user know that something went wrong during the command execution.
             if (interaction.Type is InteractionType.ApplicationCommand)
                 await interaction.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
         }
@@ -107,7 +76,21 @@ public class BotABordelService : IHostedService
 
     private Task LogAsync(LogMessage log)
     {
-        _logger.LogDebug("{msg}",log.ToString());
+        logger.LogDebug("{msg}", log.ToString());
         return Task.CompletedTask;
+    }
+
+    private Task UserVoiceStateUpdated(SocketUser user, SocketVoiceState oldVoiceState, SocketVoiceState newVoiceState)
+    {
+        try
+        {
+            _ = grandEntranceService.TriggerCustomEntranceScenarioAsync(user, newVoiceState);
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An Exception occurred in the OnUserConnection Event");
+            return Task.CompletedTask;
+        }
     }
 }

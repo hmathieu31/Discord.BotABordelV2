@@ -1,31 +1,15 @@
 ﻿using Discord.BotABordelV2.Models;
 
 using Lavalink4NET;
-using Lavalink4NET.Players;
-using Lavalink4NET.Players.Queued;
 using Lavalink4NET.Rest.Entities.Tracks;
-using Lavalink4NET.Tracks;
-
-using Microsoft.Extensions.Options;
-
-using System.Reflection.Metadata.Ecma335;
 
 using static Discord.BotABordelV2.Exceptions.MediaExceptions;
 
 namespace Discord.BotABordelV2.Services.Media;
 
-public class LocalMediaService : MediaService
+public class LocalMediaService(ILogger<LocalMediaService> logger,
+                         IAudioService audioService) : MediaService(logger, audioService)
 {
-    private readonly IAudioService _audioService;
-
-    public LocalMediaService(ILogger<LocalMediaService> logger,
-                             IOptions<LavalinkPlayerOptions> options,
-                             IAudioService audioService)
-        : base(logger, audioService)
-    {
-        _audioService = audioService;
-    }
-
     /// <summary>
     /// Plays the track asynchronous.
     /// </summary>
@@ -52,7 +36,7 @@ public class LocalMediaService : MediaService
             if (!File.Exists(track))
                 throw new FileNotFoundException("Could not open find track at path", track);
 
-            var loadedTrack = await _audioService.Tracks.LoadTrackAsync(
+            var loadedTrack = await AudioService.Tracks.LoadTrackAsync(
                 Path.GetFullPath(track),
                 new TrackLoadOptions(
                     StrictSearch: false
@@ -60,13 +44,13 @@ public class LocalMediaService : MediaService
                 ) ?? throw new InvalidOperationException($"Track not found");
 
             await player.PlayEventTrackAsync(loadedTrack);
-            _logger.LogInformation("Playing track {track}", loadedTrack.Title);
+            logger.LogInformation("Playing track {track}", loadedTrack.Title);
 
             return new PlayTrackResult(loadedTrack);
         }
         catch (InvalidChannelTypeException ex)
         {
-            _logger.LogError(ex, "Error when trying to play local track at {track}", track);
+            logger.LogError(ex, "Error when trying to play local track at {track}", track);
             return new PlayTrackResult(PlayTrackStatus.InternalException);
         }
     }

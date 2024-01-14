@@ -2,7 +2,7 @@
 
 public class PermissionsOptions
 {
-    public List<ulong> PrivilegedRolesIds { get; set; } = new();
+    public List<ulong> ForceSkipExemptionIds { get; set; } = [];
 
-    public List<ulong> ForceSkipExemptionIds { get; set; } = new();
+    public List<ulong> PrivilegedRolesIds { get; set; } = [];
 }

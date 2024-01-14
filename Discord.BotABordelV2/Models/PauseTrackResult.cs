@@ -1,4 +1,5 @@
 ﻿namespace Discord.BotABordelV2.Models;
+
 public class PauseTrackResult
 {
     public PauseTrackResult(PauseTrackStatus status)
@@ -6,9 +7,9 @@ public class PauseTrackResult
         Status = status;
     }
 
-    public PauseTrackStatus Status { get; private set; }
-
     public bool IsSuccess => Status is PauseTrackStatus.Paused;
+
+    public PauseTrackStatus Status { get; private set; }
 }
 
 public enum PauseTrackStatus

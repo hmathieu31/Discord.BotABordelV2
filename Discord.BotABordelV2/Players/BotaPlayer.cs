@@ -11,12 +11,8 @@ internal record SavedPlayingTrack(
     TrackPosition Position
 );
 
-public sealed class BotaPlayer : VoteLavalinkPlayer
+public sealed class BotaPlayer(IPlayerProperties<BotaPlayer, VoteLavalinkPlayerOptions> properties) : VoteLavalinkPlayer(properties)
 {
-    public BotaPlayer(IPlayerProperties<BotaPlayer, VoteLavalinkPlayerOptions> properties) : base(properties)
-    {
-    }
-
     private LavalinkTrack? _eventTrack;
 
     private SavedPlayingTrack? _savedPlayingTrack;

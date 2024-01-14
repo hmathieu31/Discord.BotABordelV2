@@ -1,8 +1,20 @@
-﻿
-using Lavalink4NET.Players.Vote;
+﻿using Lavalink4NET.Players.Vote;
 using Lavalink4NET.Tracks;
 
 namespace Discord.BotABordelV2.Models;
+
+public enum SkipTrackStatus
+{
+    Skipped,
+    VoteSubmitted,
+    AlreadySubmitted,
+    FinishedQueue,
+    InternalException,
+    NothingPlaying,
+    UserNotInVoiceChannel,
+    PlayerNotConnected
+}
+
 public class SkipTrackResult
 {
     public SkipTrackResult(LavalinkTrack nextTrack)
@@ -25,25 +37,13 @@ public class SkipTrackResult
         Status = (SkipTrackStatus)status;
     }
 
-    public LavalinkTrack? NextTrack { get; private set; }
+    public bool IsSuccess => Status is SkipTrackStatus.Skipped or SkipTrackStatus.FinishedQueue;
 
-    public VoteSkipInformation? VotesInfo { get; private set; }
+    public LavalinkTrack? NextTrack { get; private set; }
 
     public SkipTrackStatus Status { get; private set; }
 
-    public bool IsSuccess => Status is SkipTrackStatus.Skipped or SkipTrackStatus.FinishedQueue;
-}
-
-public enum SkipTrackStatus
-{
-    Skipped,
-    VoteSubmitted,
-    AlreadySubmitted,
-    FinishedQueue,
-    InternalException,
-    NothingPlaying,
-    UserNotInVoiceChannel,
-    PlayerNotConnected
+    public VoteSkipInformation? VotesInfo { get; private set; }
 }
 
 public enum VoteSubmitStatus

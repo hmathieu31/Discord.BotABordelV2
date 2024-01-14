@@ -1,9 +1,6 @@
-﻿using Lavalink4NET.Players;
-using Lavalink4NET.Tracks;
+﻿using Lavalink4NET.Tracks;
 
 using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
-using System.Runtime.CompilerServices;
 
 namespace Discord.BotABordelV2.Models;
 
