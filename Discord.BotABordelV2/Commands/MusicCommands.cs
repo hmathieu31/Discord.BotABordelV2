@@ -1,8 +1,10 @@
 ﻿using Discord.BotABordelV2.Constants;
 using Discord.BotABordelV2.Interfaces;
-using Discord.BotABordelV2.Models;
+using Discord.BotABordelV2.Models.Results;
 using Discord.BotABordelV2.Services.Media;
 using Discord.Interactions;
+
+using System.Text;
 
 namespace Discord.BotABordelV2.Commands;
 
@@ -62,8 +64,8 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
         {
             var response = result.Status switch
             {
-                Models.PlayTrackStatus.Playing => string.Format(MessageResponses.PlayingTrackFormat, result.Track!.Title, result.Track.Uri),
-                Models.PlayTrackStatus.Queued => string.Format(MessageResponses.QueuedTrackFormat, result.Track!.Title, result.Track.Uri),
+                PlayTrackStatus.Playing => string.Format(MessageResponses.PlayingTrackFormat, result.Track!.Title, result.Track.Uri),
+                PlayTrackStatus.Queued => string.Format(MessageResponses.QueuedTrackFormat, result.Track!.Title, result.Track.Uri),
                 _ => throw new NotImplementedException(),
             };
 
@@ -79,6 +81,54 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
             };
 
             await FollowupAsync(error);
+        }
+    }
+
+    [SlashCommand("queue", "Display queue of tracks", runMode: RunMode.Async)]
+    public async Task Queue()
+    {
+        var channel = (Context.User as IGuildUser)?.VoiceChannel;
+
+        if (channel is null)
+        {
+            await RespondAsync(MessageResponses.UserNotConnected);
+            return;
+        }
+
+        var result = await _mediaService.GetQueueAsync(channel);
+        if (result.IsSuccess)
+        {
+            var displayQueueResponseBuilder = new StringBuilder("Current Queue:");
+            displayQueueResponseBuilder.AppendLine();
+            foreach (var queuedTrack in result.QueuedTracks!)
+            {
+                switch (queuedTrack.Position)
+                {
+                    case 0:
+                        displayQueueResponseBuilder.AppendLine($"- **Now Playing** {queuedTrack.Title} ({queuedTrack.Uri}");
+                        break;
+                    case 1:
+                        displayQueueResponseBuilder.AppendLine($"- **Next up** {queuedTrack.Title} ({queuedTrack.Uri}");
+                        break;
+                    default:
+                        displayQueueResponseBuilder.AppendLine($"- {queuedTrack.Title} ({queuedTrack.Uri}");
+                        break;
+                }
+            }
+            await RespondAsync(displayQueueResponseBuilder.ToString());
+        }
+        else
+        {
+            var failureResponse = result.Status switch
+            {
+                DisplayQueueStatus.InternalException => MessageResponses.InternalEx,
+                DisplayQueueStatus.NothingPlaying => MessageResponses.NothingPlaying,
+                DisplayQueueStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
+                DisplayQueueStatus.PlayerNotConnected => MessageResponses.NothingPlaying,
+                _ => MessageResponses.InternalEx,
+            };
+
+            await RespondAsync(failureResponse);
         }
     }
 

@@ -1,5 +1,6 @@
 ﻿using Discord.BotABordelV2.Interfaces;
-using Discord.BotABordelV2.Models;
+using Discord.BotABordelV2.Models.Results;
+using Discord.BotABordelV2.Models.Tracks;
 using Discord.BotABordelV2.Players;
 
 using Lavalink4NET;
@@ -14,6 +15,42 @@ public abstract class MediaService(ILogger logger,
                                 IAudioService audioService) : IMediaService
 {
     protected IAudioService AudioService => audioService;
+
+    public async Task<GetQueueResult> GetQueueAsync(IVoiceChannel channel)
+    {
+        try
+        {
+            var player = await GetPlayerAsync(channel, false);
+
+            if (player is null)
+                return new GetQueueResult(DisplayQueueStatus.PlayerNotConnected);
+
+            var queue = player.Queue;
+            if (queue.IsEmpty)
+                return new GetQueueResult(DisplayQueueStatus.NothingPlaying);
+
+            var queuedTracks = queue.Select((t, i) => new TrackQueueItem(t.Identifier,
+                                                                         t.Track!.Title,
+                                                                         t.Track.Uri,
+                                                                         i + 1))
+                                                     .ToList();
+
+            queuedTracks.Add(new TrackQueueItem(
+                player.CurrentTrack!.Identifier,
+                player.CurrentTrack.Title,
+                player.CurrentTrack.Uri,
+                0));
+
+            queuedTracks = [.. queuedTracks.OrderBy(t => t.Position)];
+
+            return new GetQueueResult(queuedTracks);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Exception while trying to display queue");
+            return new GetQueueResult(DisplayQueueStatus.InternalException);
+        }
+    }
 
     public async Task<PauseTrackResult> PauseTrackAsync(IVoiceChannel channel)
     {

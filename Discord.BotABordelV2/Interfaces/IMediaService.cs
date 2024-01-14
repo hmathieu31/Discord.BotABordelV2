@@ -1,4 +1,4 @@
-﻿using Discord.BotABordelV2.Models;
+﻿using Discord.BotABordelV2.Models.Results;
 
 namespace Discord.BotABordelV2.Interfaces;
 
