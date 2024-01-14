@@ -1,4 +1,4 @@
-﻿namespace Discord.BotABordelV2.Models;
+﻿namespace Discord.BotABordelV2.Models.Results;
 
 public class StopPlayerResult
 {
