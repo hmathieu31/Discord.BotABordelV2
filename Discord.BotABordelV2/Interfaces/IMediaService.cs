@@ -30,6 +30,13 @@ public interface IMediaService
     Task<ResumeTrackResult> ResumeTrackAsync(IVoiceChannel channel);
 
     /// <summary>
+    /// Searches for a track asynchronously.
+    /// </summary>
+    /// <param name="track">The track to search for.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the search track result.</returns>
+    Task<SearchTrackResult> SearchTrackAsync(string track);
+
+    /// <summary>
     /// Skips the current track in the specified voice channel.
     /// </summary>
     /// <param name="channel">The voice channel to skip the track in.</param>

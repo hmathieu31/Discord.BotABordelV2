@@ -1,12 +1,15 @@
-﻿using Discord.BotABordelV2.Interfaces;
+﻿using Discord.BotABordelV2.Configuration;
+using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Models.Results;
 using Lavalink4NET;
 using Lavalink4NET.Rest.Entities.Tracks;
+using Microsoft.Extensions.Options;
 
 namespace Discord.BotABordelV2.Services.Media;
 
 public class StreamingMediaService(ILogger<StreamingMediaService> logger,
-                             IAudioService audioService) : MediaService(logger, audioService), IMediaService
+                             IAudioService audioService,
+                             IOptionsMonitor<DiscordBot> botOptions) : MediaService(logger, audioService, botOptions), IMediaService
 {
     public override async Task<PlayTrackResult> PlayTrackAsync(string track, IVoiceChannel channel)
     {
