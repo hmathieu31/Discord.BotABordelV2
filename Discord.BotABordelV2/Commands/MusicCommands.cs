@@ -3,7 +3,11 @@ using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Models.Results;
 using Discord.BotABordelV2.Services.Media;
 using Discord.Interactions;
+using Discord.WebSocket;
+
 using Serilog;
+
+using System.Linq;
 
 namespace Discord.BotABordelV2.Commands;
 
@@ -43,9 +47,20 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
         [Summary("Song", "The song to play")] string song
         )
     {
+
         try
         {
-            await DeferAsync();
+            // If the command is called from a button, modify the original message
+            var ctx = Context.Interaction as SocketMessageComponent;
+
+            if (ctx is not null)
+            {
+                await UpdateSearchMsg(song, ctx);
+            }
+            else
+            {
+                await DeferAsync();
+            }
 
             IVoiceChannel? channel = (Context.User as IGuildUser)?.VoiceChannel;
             if (channel is null)
@@ -83,6 +98,24 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
             logger.LogError(ex, "Error while playing track");
             await FollowupAsync(MessageResponses.InternalEx);
         }
+    }
+
+    private static async Task UpdateSearchMsg(string selectedSong, SocketMessageComponent ctx)
+    {
+        var searchMsgComponents = ctx.Message.Components;
+        var newBtnsBuilder = new ComponentBuilder();
+        foreach (var btn in from actRow in searchMsgComponents
+                            from comp in actRow.Components
+                            where comp is ButtonComponent
+                            select comp as ButtonComponent)
+        {
+            if (btn.CustomId == $"play:{selectedSong}")
+                newBtnsBuilder.WithButton($"{btn.Label}     ▶️", btn.CustomId, ButtonStyle.Success, disabled: true);
+            else
+                newBtnsBuilder.WithButton(btn.Label, btn.CustomId, btn.Style, disabled: true); ;
+        }
+
+        await ctx.UpdateAsync(x => x.Components = newBtnsBuilder.Build());
     }
 
     [SlashCommand("queue", "Display queue of tracks", runMode: RunMode.Async)]
