@@ -1,4 +1,5 @@
-﻿using Discord.BotABordelV2.Interfaces;
+﻿using Discord.BotABordelV2.Configuration;
+using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Models.Results;
 using Discord.BotABordelV2.Models.Tracks;
 using Discord.BotABordelV2.Players;
@@ -6,13 +7,14 @@ using Discord.BotABordelV2.Players;
 using Lavalink4NET;
 using Lavalink4NET.Players;
 using Lavalink4NET.Players.Vote;
-
+using Lavalink4NET.Rest.Entities.Tracks;
 using Microsoft.Extensions.Options;
 
 namespace Discord.BotABordelV2.Services.Media;
 
 public abstract class MediaService(ILogger logger,
-                                IAudioService audioService) : IMediaService
+                                IAudioService audioService,
+                                IOptionsMonitor<DiscordBot> botOptions) : IMediaService
 {
     protected IAudioService AudioService => audioService;
 
@@ -97,6 +99,27 @@ public abstract class MediaService(ILogger logger,
         {
             logger.LogError(ex, "Exception while trying to Resume playing");
             return new ResumeTrackResult(ResumeTrackStatus.InternalException);
+        }
+    }
+
+    public async Task<SearchTrackResult> SearchTrackAsync(string trackTitle)
+    {
+        var returedTracksNb = botOptions.CurrentValue.TracksReturnedPerSearch;
+
+        try
+        {
+            var searchResult = await audioService.Tracks
+                                .LoadTracksAsync(trackTitle, TrackSearchMode.YouTube);
+
+            if (!searchResult.IsSuccess)
+                return new SearchTrackResult(SearchTrackStatus.NoTrackFound);
+
+            return new SearchTrackResult(searchResult.Tracks.Take(returedTracksNb));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Exception while trying to search for track");
+            return new SearchTrackResult(SearchTrackStatus.InternalException);
         }
     }
 

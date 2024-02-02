@@ -3,22 +3,20 @@ using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Models.Results;
 using Discord.BotABordelV2.Services.Media;
 using Discord.Interactions;
+using Discord.WebSocket;
+
+using Serilog;
+
+using System.Linq;
 
 namespace Discord.BotABordelV2.Commands;
 
 [RequireContext(ContextType.Guild)]
-public sealed class MusicCommands : InteractionModuleBase<SocketInteractionContext>
+public sealed class MusicCommands(StreamingMediaService mediaService,
+                     IPermissionsService permissionsService,
+                     ILogger<MusicCommands> logger) : InteractionModuleBase<SocketInteractionContext>
+
 {
-    private readonly StreamingMediaService _mediaService;
-    private readonly IPermissionsService _permissionsService;
-
-    public MusicCommands(StreamingMediaService mediaService,
-                         IPermissionsService permissionsService)
-    {
-        _mediaService = mediaService ?? throw new ArgumentNullException(nameof(mediaService));
-        _permissionsService = permissionsService;
-    }
-
     [SlashCommand("pause", "Pause current track", runMode: RunMode.Async)]
     public async Task Pause()
     {
@@ -30,7 +28,7 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
             return;
         }
 
-        var response = (await _mediaService.PauseTrackAsync(channel)).Status switch
+        var response = (await mediaService.PauseTrackAsync(channel)).Status switch
         {
             PauseTrackStatus.Paused => MessageResponses.TrackPaused,
             PauseTrackStatus.NothingPlaying => MessageResponses.NothingPlaying,
@@ -44,42 +42,80 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
     }
 
     [SlashCommand("play", "Play a song", runMode: RunMode.Async)]
+    [ComponentInteraction("play:*", runMode: RunMode.Async)]
     public async Task Play(
         [Summary("Song", "The song to play")] string song
         )
     {
-        await DeferAsync();
 
-        IVoiceChannel? channel = (Context.User as IGuildUser)?.VoiceChannel;
-        if (channel is null)
+        try
         {
-            await FollowupAsync(MessageResponses.UserNotConnected);
-            return;
-        }
+            // If the command is called from a button, modify the original message
+            var ctx = Context.Interaction as SocketMessageComponent;
 
-        var result = await _mediaService.PlayTrackAsync(song, channel);
-        if (result.IsSuccess)
-        {
-            var response = result.Status switch
+            if (ctx is not null)
             {
-                PlayTrackStatus.Playing => string.Format(MessageResponses.PlayingTrackFormat, result.Track!.Title, result.Track.Uri),
-                PlayTrackStatus.Queued => string.Format(MessageResponses.QueuedTrackFormat, result.Track!.Title, result.Track.Uri),
-                _ => throw new NotImplementedException(),
-            };
-
-            await FollowupAsync(response);
-        }
-        else
-        {
-            var error = result.Status switch
+                await UpdateSearchMsg(song, ctx);
+            }
+            else
             {
-                PlayTrackStatus.NoTrackFound => MessageResponses.NoResults,
-                PlayTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
-                _ => MessageResponses.InternalEx
-            };
+                await DeferAsync();
+            }
 
-            await FollowupAsync(error);
+            IVoiceChannel? channel = (Context.User as IGuildUser)?.VoiceChannel;
+            if (channel is null)
+            {
+                await FollowupAsync(MessageResponses.UserNotConnected);
+                return;
+            }
+
+            var result = await mediaService.PlayTrackAsync(song, channel);
+            if (result.IsSuccess)
+            {
+                var response = result.Status switch
+                {
+                    PlayTrackStatus.Playing => string.Format(MessageResponses.PlayingTrackFormat, result.Track!.Title, result.Track.Uri),
+                    PlayTrackStatus.Queued => string.Format(MessageResponses.QueuedTrackFormat, result.Track!.Title, result.Track.Uri),
+                    _ => throw new NotImplementedException(),
+                };
+
+                await FollowupAsync(response);
+            }
+            else
+            {
+                var error = result.Status switch
+                {
+                    PlayTrackStatus.NoTrackFound => MessageResponses.NoResults,
+                    PlayTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
+                    _ => MessageResponses.InternalEx
+                };
+
+                await FollowupAsync(error);
+            }
         }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error while playing track");
+            await FollowupAsync(MessageResponses.InternalEx);
+        }
+    }
+
+    private static async Task UpdateSearchMsg(string selectedSong, SocketMessageComponent ctx)
+    {
+        var searchMsgComponents = ctx.Message.Components;
+        var newBtnsBuilder = new ComponentBuilder();
+        foreach (var btn in from actRow in searchMsgComponents
+                            from comp in actRow.Components
+                            where comp is ButtonComponent
+                            select comp as ButtonComponent)
+        {
+            if (btn.CustomId == $"play:{selectedSong}")
+                newBtnsBuilder.WithButton($"{btn.Label}     ▶️", btn.CustomId, ButtonStyle.Success, disabled: true);
+            else
+                newBtnsBuilder.WithButton(btn.Label, btn.CustomId, btn.Style, disabled: true); ;
+        }
+
+        await ctx.UpdateAsync(x => x.Components = newBtnsBuilder.Build());
     }
 
     [SlashCommand("queue", "Display queue of tracks", runMode: RunMode.Async)]
@@ -93,7 +129,7 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
             return;
         }
 
-        var result = await _mediaService.GetQueueAsync(channel);
+        var result = await mediaService.GetQueueAsync(channel);
         if (result.IsSuccess)
         {
             List<Embed> embeds = [];
@@ -159,7 +195,7 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
             return;
         }
 
-        var response = (await _mediaService.ResumeTrackAsync(channel)).Status switch
+        var response = (await mediaService.ResumeTrackAsync(channel)).Status switch
         {
             ResumeTrackStatus.Resumed => MessageResponses.TrackResumed,
             ResumeTrackStatus.PlayerNotPaused => MessageResponses.NothingPaused,
@@ -185,13 +221,13 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
             return;
         }
 
-        if (forceSkip && !_permissionsService.HasForceSkipPermission(user))
+        if (forceSkip && !permissionsService.HasForceSkipPermission(user))
         {
             await RespondAsync(MessageResponses.Unauthorized);
             return;
         }
 
-        SkipTrackResult result = await _mediaService.SkipTrackAsync(channel, Context.User, false);
+        SkipTrackResult result = await mediaService.SkipTrackAsync(channel, Context.User, false);
         var response = result.Status switch
         {
             SkipTrackStatus.Skipped => string.Format(MessageResponses.SkippedNowPlayingFormat, result.NextTrack!.Title, result.NextTrack.Uri),
@@ -207,6 +243,65 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
         await RespondAsync(response);
     }
 
+    [SlashCommand("search", "Search for a song", runMode: RunMode.Async)]
+    public async Task Search(
+        [Summary("Song", "The song to search for")] string song
+        )
+    {
+        await DeferAsync();
+
+        try
+        {
+            var result = await mediaService.SearchTrackAsync(song);
+            if (result.IsSuccess)
+            {
+                List<Embed> searchEmbeds = [];
+
+                var responseEmbedBuilder = new EmbedBuilder()
+                    .WithTitle("Search Results")
+                    .WithDescription(string.Format(MessageResponses.SeachTracksFormat, result.FoundTracks!.Count()))
+                    .WithColor(Color.Blue)
+                    .WithFooter("Click on the button for the track you want to play");
+
+                var buttonsBuilder = new ComponentBuilder();
+
+                var i = 0;
+                foreach (var track in result.FoundTracks!)
+                {
+                    i++;
+
+                    searchEmbeds.Add(new EmbedBuilder()
+                                    .WithTitle($"{i} - {track.Title}")
+                                    .WithDescription(track.Uri?.ToString())
+                                    .WithThumbnailUrl(track.ArtworkUri?.ToString())
+                                    .Build());
+
+                    buttonsBuilder.WithButton($"{i}", $"play:{track.Uri!}", ButtonStyle.Primary);
+                }
+
+                await FollowupAsync(
+                    string.Format(MessageResponses.SeachTracksFormat, result.FoundTracks!.Count()),
+                    embeds: [.. searchEmbeds],
+                    components: buttonsBuilder.Build());
+            }
+            else
+            {
+                var error = result.Status switch
+                {
+                    SearchTrackStatus.NoTrackFound => MessageResponses.NoResults,
+                    _ => MessageResponses.InternalEx
+                };
+
+                await FollowupAsync(error);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error while searching for track");
+            await FollowupAsync(MessageResponses.InternalEx);
+        }
+    }
+
     [SlashCommand("stop", "Stop the player and clears the queue", runMode: RunMode.Async)]
     public async Task Stop()
     {
@@ -218,7 +313,7 @@ public sealed class MusicCommands : InteractionModuleBase<SocketInteractionConte
             return;
         }
 
-        var response = (await _mediaService.StopPlayerAsync(channel)).Status switch
+        var response = (await mediaService.StopPlayerAsync(channel)).Status switch
         {
             StopPlayerStatus.Stopped => MessageResponses.PlayerStopped,
             StopPlayerStatus.InternalException => MessageResponses.InternalEx,

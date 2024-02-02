@@ -11,6 +11,8 @@ public class DiscordBot
     public bool LogUnknownEvents { get; set; }
 
     public string Token { get; set; } = null!;
+
+    public int TracksReturnedPerSearch { get; set; }
 }
 
 public class EntrancesEvent

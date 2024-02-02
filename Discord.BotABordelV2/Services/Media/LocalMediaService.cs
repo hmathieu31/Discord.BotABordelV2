@@ -1,13 +1,15 @@
-﻿using Discord.BotABordelV2.Models.Results;
+﻿using Discord.BotABordelV2.Configuration;
+using Discord.BotABordelV2.Models.Results;
 using Lavalink4NET;
 using Lavalink4NET.Rest.Entities.Tracks;
-
+using Microsoft.Extensions.Options;
 using static Discord.BotABordelV2.Exceptions.MediaExceptions;
 
 namespace Discord.BotABordelV2.Services.Media;
 
 public class LocalMediaService(ILogger<LocalMediaService> logger,
-                         IAudioService audioService) : MediaService(logger, audioService)
+                         IAudioService audioService,
+                         IOptionsMonitor<DiscordBot> botOptions) : MediaService(logger, audioService, botOptions)
 {
     /// <summary>
     /// Plays the track asynchronous.
