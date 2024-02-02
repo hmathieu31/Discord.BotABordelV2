@@ -112,7 +112,7 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
             if (btn.CustomId == $"play:{selectedSong}")
                 newBtnsBuilder.WithButton($"{btn.Label}     ▶️", btn.CustomId, ButtonStyle.Success, disabled: true);
             else
-                newBtnsBuilder.WithButton(btn.Label, btn.CustomId, btn.Style, disabled: true); ;
+                newBtnsBuilder.WithButton(btn.Label, btn.CustomId, btn.Style, disabled: true);
         }
 
         await ctx.UpdateAsync(x => x.Components = newBtnsBuilder.Build());
@@ -256,13 +256,6 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
             if (result.IsSuccess)
             {
                 List<Embed> searchEmbeds = [];
-
-                var responseEmbedBuilder = new EmbedBuilder()
-                    .WithTitle("Search Results")
-                    .WithDescription(string.Format(MessageResponses.SeachTracksFormat, result.FoundTracks!.Count()))
-                    .WithColor(Color.Blue)
-                    .WithFooter("Click on the button for the track you want to play");
-
                 var buttonsBuilder = new ComponentBuilder();
 
                 var i = 0;

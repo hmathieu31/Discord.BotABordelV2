@@ -34,7 +34,7 @@ public interface IMediaService
     /// </summary>
     /// <param name="track">The track to search for.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the search track result.</returns>
-    Task<SearchTrackResult> SearchTrackAsync(string track);
+    Task<SearchTrackResult> SearchTrackAsync(string trackTitle);
 
     /// <summary>
     /// Skips the current track in the specified voice channel.
