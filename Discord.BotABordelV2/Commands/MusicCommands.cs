@@ -255,6 +255,8 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
             var result = await mediaService.SearchTrackAsync(song);
             if (result.IsSuccess)
             {
+                List<Embed> searchEmbeds = [];
+
                 var responseEmbedBuilder = new EmbedBuilder()
                     .WithTitle("Search Results")
                     .WithDescription(string.Format(MessageResponses.SeachTracksFormat, result.FoundTracks!.Count()))
@@ -267,13 +269,20 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
                 foreach (var track in result.FoundTracks!)
                 {
                     i++;
-                    responseEmbedBuilder
-                        .AddField($"{i}- {track.Title}", track.Uri?.ToString(), false);
+
+                    searchEmbeds.Add(new EmbedBuilder()
+                                    .WithTitle($"{i} - {track.Title}")
+                                    .WithDescription(track.Uri?.ToString())
+                                    .WithThumbnailUrl(track.ArtworkUri?.ToString())
+                                    .Build());
 
                     buttonsBuilder.WithButton($"{i}", $"play:{track.Uri!}", ButtonStyle.Primary);
                 }
 
-                await FollowupAsync(embed: responseEmbedBuilder.Build(), components: buttonsBuilder.Build());
+                await FollowupAsync(
+                    string.Format(MessageResponses.SeachTracksFormat, result.FoundTracks!.Count()),
+                    embeds: [.. searchEmbeds],
+                    components: buttonsBuilder.Build());
             }
             else
             {
