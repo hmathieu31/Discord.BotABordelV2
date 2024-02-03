@@ -8,6 +8,7 @@ using Lavalink4NET;
 using Lavalink4NET.Players;
 using Lavalink4NET.Players.Vote;
 using Lavalink4NET.Rest.Entities.Tracks;
+
 using Microsoft.Extensions.Options;
 
 namespace Discord.BotABordelV2.Services.Media;
@@ -17,6 +18,34 @@ public abstract class MediaService(ILogger logger,
                                 IOptionsMonitor<DiscordBot> botOptions) : IMediaService
 {
     protected IAudioService AudioService => audioService;
+
+    public async Task<SkipTrackResult> ForceSkipTrackAsync(IVoiceChannel channel)
+    {
+        try
+        {
+            var player = await GetPlayerAsync(channel, false);
+
+            if (player is null)
+                return new SkipTrackResult(SkipTrackStatus.PlayerNotConnected);
+
+            if (player.CurrentTrack is null)
+                return new SkipTrackResult(SkipTrackStatus.NothingPlaying);
+
+            await player.SkipAsync();
+
+            var track = player.CurrentTrack;
+
+            if (track is null)
+                return new SkipTrackResult(SkipTrackStatus.FinishedQueue);
+
+            return new SkipTrackResult(track);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Exception while trying to Skip");
+            return new SkipTrackResult(SkipTrackStatus.InternalException);
+        }
+    }
 
     public async Task<GetQueueResult> GetQueueAsync(IVoiceChannel channel)
     {
@@ -123,7 +152,29 @@ public abstract class MediaService(ILogger logger,
         }
     }
 
-    public async Task<SkipTrackResult> SkipTrackAsync(IVoiceChannel channel, IUser user, bool forceSkip = false)
+    public async Task<StopPlayerResult> StopPlayerAsync(IVoiceChannel channel)
+    {
+        try
+        {
+            var player = await GetPlayerAsync(channel, false);
+
+            if (player is null)
+                return new StopPlayerResult(StopPlayerStatus.PlayerNotConnected);
+
+            if (player.CurrentTrack is null)
+                return new StopPlayerResult(StopPlayerStatus.NothingPlaying);
+
+            await player.StopAsync();
+            return new StopPlayerResult(StopPlayerStatus.Stopped);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Exception while trying to stop player");
+            return new StopPlayerResult(StopPlayerStatus.InternalException);
+        }
+    }
+
+    public async Task<SkipTrackResult> VoteSkipTrackAsync(IVoiceChannel channel, IUser user)
     {
         try
         {
@@ -135,12 +186,7 @@ public abstract class MediaService(ILogger logger,
             if (player.CurrentTrack is null)
                 return new SkipTrackResult(SkipTrackStatus.NothingPlaying);
 
-            var voteOptions = new UserVoteOptions
-            {
-                Factor = forceSkip ? 100 : null,
-            };
-
-            var voteResult = await player.VoteAsync(user.Id, voteOptions);
+            var voteResult = await player.VoteAsync(user.Id, new UserVoteOptions());
 
             switch (voteResult)
             {
@@ -165,28 +211,6 @@ public abstract class MediaService(ILogger logger,
         {
             logger.LogError(ex, "Exception while trying to Skip");
             return new SkipTrackResult(SkipTrackStatus.InternalException);
-        }
-    }
-
-    public async Task<StopPlayerResult> StopPlayerAsync(IVoiceChannel channel)
-    {
-        try
-        {
-            var player = await GetPlayerAsync(channel, false);
-
-            if (player is null)
-                return new StopPlayerResult(StopPlayerStatus.PlayerNotConnected);
-
-            if (player.CurrentTrack is null)
-                return new StopPlayerResult(StopPlayerStatus.NothingPlaying);
-
-            await player.StopAsync();
-            return new StopPlayerResult(StopPlayerStatus.Stopped);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Exception while trying to stop player");
-            return new StopPlayerResult(StopPlayerStatus.InternalException);
         }
     }
 
