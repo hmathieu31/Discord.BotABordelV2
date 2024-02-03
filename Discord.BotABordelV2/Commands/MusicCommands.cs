@@ -5,10 +5,6 @@ using Discord.BotABordelV2.Services.Media;
 using Discord.Interactions;
 using Discord.WebSocket;
 
-using Serilog;
-
-using System.Linq;
-
 namespace Discord.BotABordelV2.Commands;
 
 [RequireContext(ContextType.Guild)]
@@ -227,7 +223,10 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
             return;
         }
 
-        SkipTrackResult result = await mediaService.SkipTrackAsync(channel, Context.User, false);
+        SkipTrackResult result = forceSkip
+            ? await mediaService.ForceSkipTrackAsync(channel)
+            : await mediaService.VoteSkipTrackAsync(channel, Context.User);
+
         var response = result.Status switch
         {
             SkipTrackStatus.Skipped => string.Format(MessageResponses.SkippedNowPlayingFormat, result.NextTrack!.Title, result.NextTrack.Uri),

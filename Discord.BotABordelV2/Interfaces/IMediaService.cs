@@ -8,6 +8,15 @@ namespace Discord.BotABordelV2.Interfaces;
 public interface IMediaService
 {
     /// <summary>
+    /// Forces the skipping of the current track in the specified voice channel.
+    /// </summary>
+    /// <param name="channel">The voice channel to skip the track in.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation. The task result contains the skip track result.
+    /// </returns>
+    Task<SkipTrackResult> ForceSkipTrackAsync(IVoiceChannel channel);
+
+    /// <summary>
     /// Pauses the player in the specified voice channel.
     /// </summary>
     /// <param name="channel">The voice channel to pause the player in.</param>
@@ -33,16 +42,10 @@ public interface IMediaService
     /// Searches for a track asynchronously.
     /// </summary>
     /// <param name="track">The track to search for.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the search track result.</returns>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains the search track result.
+    /// </returns>
     Task<SearchTrackResult> SearchTrackAsync(string trackTitle);
-
-    /// <summary>
-    /// Skips the current track in the specified voice channel.
-    /// </summary>
-    /// <param name="channel">The voice channel to skip the track in.</param>
-    /// <param name="user">The user that requested the skip.</param>
-    /// <returns>The result of skipping the track.</returns>
-    Task<SkipTrackResult> SkipTrackAsync(IVoiceChannel channel, IUser user, bool forceSkip = false);
 
     /// <summary>
     /// Stops the player in the specified voice channel.
@@ -50,4 +53,12 @@ public interface IMediaService
     /// <param name="channel">The voice channel to stop the player in.</param>
     /// <returns>The result of stopping the player.</returns>
     Task<StopPlayerResult> StopPlayerAsync(IVoiceChannel channel);
+
+    /// <summary>
+    /// Votes to skip the current track in the specified voice channel.
+    /// </summary>
+    /// <param name="channel">The voice channel to skip the track in.</param>
+    /// <param name="user">The user that requested the skip.</param>
+    /// <returns>The result of skipping the track.</returns>
+    Task<SkipTrackResult> VoteSkipTrackAsync(IVoiceChannel channel, IUser user);
 }
