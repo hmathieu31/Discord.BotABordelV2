@@ -9,6 +9,7 @@ namespace Discord.BotABordelV2.Commands;
 
 [RequireContext(ContextType.Guild)]
 public sealed class MusicCommands(StreamingMediaService mediaService,
+                     TrollMediaService trollMediaService,
                      IPermissionsService permissionsService,
                      ILogger<MusicCommands> logger) : InteractionModuleBase<SocketInteractionContext>
 
@@ -76,6 +77,33 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
                 };
 
                 await FollowupAsync(response);
+            }
+            else if (result.Status is PlayTrackStatus.TrackBanned)
+            {
+                var res = await trollMediaService.PlayTrackAsync(song, channel);
+                if (res.IsSuccess)
+                {
+                    var response = res.Status switch
+                    {
+                        PlayTrackStatus.Playing => string.Format(MessageResponses.PlayingTrackFormat, result.Track!.Title, result.Track.Uri),
+                        PlayTrackStatus.Queued => string.Format(MessageResponses.QueuedTrackFormat, result.Track!.Title, result.Track.Uri),
+                        _ => throw new NotImplementedException(),
+                    };
+
+                    await FollowupAsync(response);
+                }
+                else
+                {
+                    var error = res.Status switch
+                    {
+                        PlayTrackStatus.NoTrackFound => MessageResponses.NoResults,
+                        PlayTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
+                        _ => MessageResponses.InternalEx
+                    };
+
+                    await FollowupAsync(error);
+                }   
+
             }
             else
             {

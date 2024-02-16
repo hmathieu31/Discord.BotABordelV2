@@ -6,6 +6,7 @@ using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Services;
 using Discord.BotABordelV2.Services.Media;
 using Discord.BotABordelV2.Services.Permissions;
+using Discord.BotABordelV2.Services.ShadowBan;
 using Discord.Interactions;
 using Discord.WebSocket;
 
@@ -41,6 +42,8 @@ public static class Program
                     .AddLavalink(context)
                     .AddSingleton<StreamingMediaService>()
                     .AddSingleton<LocalMediaService>()
+                    .AddSingleton<TrollMediaService>()
+                    .AddSingleton<IShadowBanService, ShadowBanService>()
                     .AddSingleton<IGrandEntranceService, GrandEntrancesService>()
                     .AddSingleton<IPermissionsService, PermissionsService>();
         });
@@ -143,6 +146,8 @@ public static class Program
                 .Bind(config.GetRequiredSection(LavalinkOptions.ConfigSectionName));
         services.AddOptionsWithValidateOnStart<PermissionsOptions>()
                 .Bind(config.GetRequiredSection(PermissionsOptions.ConfigSectionName));
+        services.AddOptionsWithValidateOnStart<ShadowBanOptions>()
+                .Bind(config.GetRequiredSection(ShadowBanOptions.ConfigSectionName));
 
         return services;
     }

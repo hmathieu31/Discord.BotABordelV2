@@ -15,6 +15,13 @@ public record PlayTrackResult
             : PlayTrackStatus.Queued;
     }
 
+    public PlayTrackResult(LavalinkTrack track, PlayTrackStatus status, int queuePosition = 0)
+    {
+        Track = track;
+        QueuePosition = queuePosition;
+        Status = status;
+    }
+
     public PlayTrackResult(PlayTrackStatus status)
     {
         if (status is PlayTrackStatus.Playing
@@ -42,6 +49,7 @@ public enum PlayTrackStatus
     Playing,
     Queued,
     NoTrackFound,
+    TrackBanned,
     UserNotInVoiceChannel,
     InternalException,
     PlayerUnavailable,
