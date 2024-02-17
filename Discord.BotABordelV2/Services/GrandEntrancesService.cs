@@ -21,7 +21,7 @@ public class GrandEntrancesService(IServiceScopeFactory scopeFactory,
             return;
 
         using var scope = scopeFactory.CreateAsyncScope();
-        var entranceOptions = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<DiscordBot>>().Value.EntrancesEvents;
+        var entranceOptions = scope.ServiceProvider.GetRequiredService<IOptionsSnapshot<DiscordBotOptions>>().Value.EntrancesEvents;
         var eventForUser = entranceOptions.Find(evnOpt => evnOpt.UserId == connectingUser.Id);
         if (eventForUser is not null)
         {

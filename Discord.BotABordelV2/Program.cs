@@ -14,6 +14,8 @@ using Lavalink4NET.InactivityTracking.Extensions;
 using Lavalink4NET.InactivityTracking.Trackers.Idle;
 using Lavalink4NET.InactivityTracking.Trackers.Users;
 
+using Microsoft.Extensions.Azure;
+
 using Serilog;
 
 namespace Discord.BotABordelV2;
@@ -133,17 +135,14 @@ public static class Program
     /// <returns>A reference to this instance after the operation has completed.</returns>
     private static IServiceCollection AddDiscordBotOptions(this IServiceCollection services, HostBuilderContext context)
     {
-        var botSection = context.Configuration.GetRequiredSection("DiscordBot");
-        var lavalinkSection = context.Configuration.GetRequiredSection("Lavalink");
-        var permissionsSection = context.Configuration.GetRequiredSection("Permissions");
+        var config = context.Configuration;
 
-        services.Configure<DiscordBot>(botSection)
-                .Configure<Lavalink>(lavalinkSection)
-                .Configure<PermissionsOptions>(permissionsSection);
-
-        botSection.Bind(new DiscordBot());
-        lavalinkSection.Bind(new Lavalink());
-        permissionsSection.Bind(new PermissionsOptions());
+        services.AddOptionsWithValidateOnStart<DiscordBotOptions>()
+                .Bind(config.GetRequiredSection(DiscordBotOptions.ConfigSectionName));
+        services.AddOptionsWithValidateOnStart<LavalinkOptions>()
+                .Bind(config.GetRequiredSection(LavalinkOptions.ConfigSectionName));
+        services.AddOptionsWithValidateOnStart<PermissionsOptions>()
+                .Bind(config.GetRequiredSection(PermissionsOptions.ConfigSectionName));
 
         return services;
     }

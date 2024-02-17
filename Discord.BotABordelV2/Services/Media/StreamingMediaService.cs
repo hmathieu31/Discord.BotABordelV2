@@ -9,7 +9,7 @@ namespace Discord.BotABordelV2.Services.Media;
 
 public class StreamingMediaService(ILogger<StreamingMediaService> logger,
                              IAudioService audioService,
-                             IOptionsMonitor<DiscordBot> botOptions) : MediaService(logger, audioService, botOptions), IMediaService
+                             IOptionsMonitor<DiscordBotOptions> botOptions) : MediaService(logger, audioService, botOptions), IMediaService
 {
     public override async Task<PlayTrackResult> PlayTrackAsync(string track, IVoiceChannel channel)
     {

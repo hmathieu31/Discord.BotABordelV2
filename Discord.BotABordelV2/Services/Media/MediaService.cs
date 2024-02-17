@@ -15,7 +15,7 @@ namespace Discord.BotABordelV2.Services.Media;
 
 public abstract class MediaService(ILogger logger,
                                 IAudioService audioService,
-                                IOptionsMonitor<DiscordBot> botOptions) : IMediaService
+                                IOptionsMonitor<DiscordBotOptions> botOptions) : IMediaService
 {
     protected IAudioService AudioService => audioService;
 

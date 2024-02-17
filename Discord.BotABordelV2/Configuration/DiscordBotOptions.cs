@@ -1,7 +1,9 @@
 ﻿namespace Discord.BotABordelV2.Configuration;
 
-public class DiscordBot
+public class DiscordBotOptions
 {
+    public const string ConfigSectionName = "DiscordBot";
+
     public List<EntrancesEvent> EntrancesEvents { get; set; } = null!;
 
     public ulong GuildId { get; set; }
