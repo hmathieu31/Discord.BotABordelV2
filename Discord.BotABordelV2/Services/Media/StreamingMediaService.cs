@@ -1,15 +1,18 @@
 ﻿using Discord.BotABordelV2.Configuration;
 using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Models.Results;
+
 using Lavalink4NET;
 using Lavalink4NET.Rest.Entities.Tracks;
+
 using Microsoft.Extensions.Options;
 
 namespace Discord.BotABordelV2.Services.Media;
 
 public class StreamingMediaService(ILogger<StreamingMediaService> logger,
                              IAudioService audioService,
-                             IOptionsMonitor<DiscordBot> botOptions) : MediaService(logger, audioService, botOptions), IMediaService
+                             IShadowBanService shadowBanService,
+                             IOptionsMonitor<DiscordBotOptions> botOptions) : MediaService(logger, audioService, botOptions), IMediaService
 {
     public override async Task<PlayTrackResult> PlayTrackAsync(string track, IVoiceChannel channel)
     {
@@ -25,6 +28,12 @@ public class StreamingMediaService(ILogger<StreamingMediaService> logger,
         {
             logger.LogDebug("Track not found of name '{track}'", track);
             return new PlayTrackResult(PlayTrackStatus.NoTrackFound);
+        }
+
+        if (shadowBanService.IsTrackBanned(new(foundTrack.Identifier, foundTrack.Title, foundTrack.Uri)))
+        {
+            logger.LogDebug("Track shadow banned '{track}'", foundTrack.Title);
+            return new PlayTrackResult(foundTrack ,PlayTrackStatus.TrackBanned);
         }
 
         var queuePos = await player.PlayAsync(foundTrack);

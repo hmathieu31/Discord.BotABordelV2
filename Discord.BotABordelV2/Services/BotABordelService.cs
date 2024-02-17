@@ -13,7 +13,7 @@ public class BotABordelService(ILogger<BotABordelService> logger,
                          IGrandEntranceService grandEntranceService,
                          DiscordSocketClient discordSocketClient,
                          InteractionService interactionService,
-                         IOptions<DiscordBot> options,
+                         IOptions<DiscordBotOptions> options,
                          IServiceProvider services) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)

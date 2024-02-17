@@ -9,7 +9,7 @@ namespace Discord.BotABordelV2.Services.Media;
 
 public class LocalMediaService(ILogger<LocalMediaService> logger,
                          IAudioService audioService,
-                         IOptionsMonitor<DiscordBot> botOptions) : MediaService(logger, audioService, botOptions)
+                         IOptionsMonitor<DiscordBotOptions> botOptions) : MediaService(logger, audioService, botOptions)
 {
     /// <summary>
     /// Plays the track asynchronous.

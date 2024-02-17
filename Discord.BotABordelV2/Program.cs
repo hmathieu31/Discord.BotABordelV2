@@ -6,6 +6,7 @@ using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Services;
 using Discord.BotABordelV2.Services.Media;
 using Discord.BotABordelV2.Services.Permissions;
+using Discord.BotABordelV2.Services.ShadowBan;
 using Discord.Interactions;
 using Discord.WebSocket;
 
@@ -13,6 +14,8 @@ using Lavalink4NET.Extensions;
 using Lavalink4NET.InactivityTracking.Extensions;
 using Lavalink4NET.InactivityTracking.Trackers.Idle;
 using Lavalink4NET.InactivityTracking.Trackers.Users;
+
+using Microsoft.Extensions.Azure;
 
 using Serilog;
 
@@ -39,6 +42,8 @@ public static class Program
                     .AddLavalink(context)
                     .AddSingleton<StreamingMediaService>()
                     .AddSingleton<LocalMediaService>()
+                    .AddSingleton<TrollMediaService>()
+                    .AddSingleton<IShadowBanService, ShadowBanService>()
                     .AddSingleton<IGrandEntranceService, GrandEntrancesService>()
                     .AddSingleton<IPermissionsService, PermissionsService>();
         });
@@ -133,17 +138,16 @@ public static class Program
     /// <returns>A reference to this instance after the operation has completed.</returns>
     private static IServiceCollection AddDiscordBotOptions(this IServiceCollection services, HostBuilderContext context)
     {
-        var botSection = context.Configuration.GetRequiredSection("DiscordBot");
-        var lavalinkSection = context.Configuration.GetRequiredSection("Lavalink");
-        var permissionsSection = context.Configuration.GetRequiredSection("Permissions");
+        var config = context.Configuration;
 
-        services.Configure<DiscordBot>(botSection)
-                .Configure<Lavalink>(lavalinkSection)
-                .Configure<PermissionsOptions>(permissionsSection);
-
-        botSection.Bind(new DiscordBot());
-        lavalinkSection.Bind(new Lavalink());
-        permissionsSection.Bind(new PermissionsOptions());
+        services.AddOptionsWithValidateOnStart<DiscordBotOptions>()
+                .Bind(config.GetRequiredSection(DiscordBotOptions.ConfigSectionName));
+        services.AddOptionsWithValidateOnStart<LavalinkOptions>()
+                .Bind(config.GetRequiredSection(LavalinkOptions.ConfigSectionName));
+        services.AddOptionsWithValidateOnStart<PermissionsOptions>()
+                .Bind(config.GetRequiredSection(PermissionsOptions.ConfigSectionName));
+        services.AddOptionsWithValidateOnStart<ShadowBanOptions>()
+                .Bind(config.GetRequiredSection(ShadowBanOptions.ConfigSectionName));
 
         return services;
     }

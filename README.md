@@ -1,7 +1,7 @@
 # Bot A Bordel V2
 
 [![Issues][issues-shield]][issues-url]
-![Quality Gate Status][quality-gate-url]
+[![Quality Gate Status][quality-badge]][quality-url]
 
 - [Bot A Bordel V2](#bot-a-bordel-v2)
   - [About The Project](#about-the-project)
@@ -55,7 +55,9 @@ This section assumes Docker is used to start the Bot and its dependency.
 
    ```sh
    docker pull ghcr.io/lavalink-devs/lavalink:4
+   ```
 
+   ```sh
    docker run -d \
     --name lavalink \
     --restart unless-stopped \
@@ -91,4 +93,5 @@ This section assumes Docker is used to start the Bot and its dependency.
 [dotnet-url]: https://dotnet.microsoft.com/en-us/
 [discord-net-url]: https://discordnet.dev/
 [lavalink4net-url]: https://github.com/angelobreuer/Lavalink4NET
-[quality-gate-url]: https://sonarcloud.io/api/project_badges/measure?project=hmathieu-insat_Discord.BotABordelV2&metric=alert_status
+[quality-badge]: https://sonarcloud.io/api/project_badges/measure?project=hmathieu-insat_Discord.BotABordelV2&metric=alert_status
+[quality-url]: https://sonarcloud.io/summary/new_code?id=hmathieu-insat_Discord.BotABordelV2
