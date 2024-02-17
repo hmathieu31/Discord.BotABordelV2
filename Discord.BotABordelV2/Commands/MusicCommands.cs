@@ -5,6 +5,8 @@ using Discord.BotABordelV2.Services.Media;
 using Discord.Interactions;
 using Discord.WebSocket;
 
+using Lavalink4NET.Tracks;
+
 namespace Discord.BotABordelV2.Commands;
 
 [RequireContext(ContextType.Guild)]
@@ -44,7 +46,6 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
         [Summary("Song", "The song to play")] string song
         )
     {
-
         try
         {
             // If the command is called from a button, modify the original message
@@ -67,79 +68,20 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
             }
 
             var result = await mediaService.PlayTrackAsync(song, channel);
-            if (result.IsSuccess)
-            {
-                var response = result.Status switch
-                {
-                    PlayTrackStatus.Playing => string.Format(MessageResponses.PlayingTrackFormat, result.Track!.Title, result.Track.Uri),
-                    PlayTrackStatus.Queued => string.Format(MessageResponses.QueuedTrackFormat, result.Track!.Title, result.Track.Uri),
-                    _ => throw new NotImplementedException(),
-                };
-
-                await FollowupAsync(response);
-            }
-            else if (result.Status is PlayTrackStatus.TrackBanned)
+            if (result.Status is PlayTrackStatus.TrackBanned)
             {
                 var res = await trollMediaService.PlayTrackAsync(song, channel);
-                if (res.IsSuccess)
-                {
-                    var response = res.Status switch
-                    {
-                        PlayTrackStatus.Playing => string.Format(MessageResponses.PlayingTrackFormat, result.Track!.Title, result.Track.Uri),
-                        PlayTrackStatus.Queued => string.Format(MessageResponses.QueuedTrackFormat, result.Track!.Title, result.Track.Uri),
-                        _ => throw new NotImplementedException(),
-                    };
-
-                    await FollowupAsync(response);
-                }
-                else
-                {
-                    var error = res.Status switch
-                    {
-                        PlayTrackStatus.NoTrackFound => MessageResponses.NoResults,
-                        PlayTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
-                        _ => MessageResponses.InternalEx
-                    };
-
-                    await FollowupAsync(error);
-                }   
-
+                await HandlePlayTrackResultAsync(res, result.Track);
+                return;
             }
-            else
-            {
-                var error = result.Status switch
-                {
-                    PlayTrackStatus.NoTrackFound => MessageResponses.NoResults,
-                    PlayTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
-                    _ => MessageResponses.InternalEx
-                };
 
-                await FollowupAsync(error);
-            }
+            await HandlePlayTrackResultAsync(result);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error while playing track");
             await FollowupAsync(MessageResponses.InternalEx);
         }
-    }
-
-    private static async Task UpdateSearchMsg(string selectedSong, SocketMessageComponent ctx)
-    {
-        var searchMsgComponents = ctx.Message.Components;
-        var newBtnsBuilder = new ComponentBuilder();
-        foreach (var btn in from actRow in searchMsgComponents
-                            from comp in actRow.Components
-                            where comp is ButtonComponent
-                            select comp as ButtonComponent)
-        {
-            if (btn.CustomId == $"play:{selectedSong}")
-                newBtnsBuilder.WithButton($"{btn.Label}     ▶️", btn.CustomId, ButtonStyle.Success, disabled: true);
-            else
-                newBtnsBuilder.WithButton(btn.Label, btn.CustomId, btn.Style, disabled: true);
-        }
-
-        await ctx.UpdateAsync(x => x.Components = newBtnsBuilder.Build());
     }
 
     [SlashCommand("queue", "Display queue of tracks", runMode: RunMode.Async)]
@@ -231,45 +173,6 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
         await RespondAsync(response);
     }
 
-    [SlashCommand("skip", "Skip the track currently playing", runMode: RunMode.Async)]
-    public async Task Skip(
-        [Summary("force", "If true, will attempt to force skip")] bool forceSkip = false
-        )
-    {
-        var user = Context.User as IGuildUser;
-        var channel = user?.VoiceChannel;
-
-        if (user is null || channel is null)
-        {
-            await RespondAsync(MessageResponses.UserNotConnected);
-            return;
-        }
-
-        if (forceSkip && !permissionsService.HasForceSkipPermission(user))
-        {
-            await RespondAsync(MessageResponses.Unauthorized);
-            return;
-        }
-
-        SkipTrackResult result = forceSkip
-            ? await mediaService.ForceSkipTrackAsync(channel)
-            : await mediaService.VoteSkipTrackAsync(channel, Context.User);
-
-        var response = result.Status switch
-        {
-            SkipTrackStatus.Skipped => string.Format(MessageResponses.SkippedNowPlayingFormat, result.NextTrack!.Title, result.NextTrack.Uri),
-            SkipTrackStatus.FinishedQueue => MessageResponses.SkippedFinishedQueue,
-            SkipTrackStatus.InternalException => MessageResponses.InternalEx,
-            SkipTrackStatus.NothingPlaying => MessageResponses.NothingPlaying,
-            SkipTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
-            SkipTrackStatus.PlayerNotConnected => MessageResponses.NothingPlaying,
-            SkipTrackStatus.VoteSubmitted => string.Format(MessageResponses.VotedSkipFormat, result.VotesInfo!.Value.Percentage),
-            SkipTrackStatus.AlreadySubmitted => MessageResponses.AlreadyVotedSkip,
-            _ => MessageResponses.InternalEx,
-        };
-        await RespondAsync(response);
-    }
-
     [SlashCommand("search", "Search for a song", runMode: RunMode.Async)]
     public async Task Search(
         [Summary("Song", "The song to search for")] string song
@@ -322,6 +225,45 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
         }
     }
 
+    [SlashCommand("skip", "Skip the track currently playing", runMode: RunMode.Async)]
+    public async Task Skip(
+        [Summary("force", "If true, will attempt to force skip")] bool forceSkip = false
+        )
+    {
+        var user = Context.User as IGuildUser;
+        var channel = user?.VoiceChannel;
+
+        if (user is null || channel is null)
+        {
+            await RespondAsync(MessageResponses.UserNotConnected);
+            return;
+        }
+
+        if (forceSkip && !permissionsService.HasForceSkipPermission(user))
+        {
+            await RespondAsync(MessageResponses.Unauthorized);
+            return;
+        }
+
+        SkipTrackResult result = forceSkip
+            ? await mediaService.ForceSkipTrackAsync(channel)
+            : await mediaService.VoteSkipTrackAsync(channel, Context.User);
+
+        var response = result.Status switch
+        {
+            SkipTrackStatus.Skipped => string.Format(MessageResponses.SkippedNowPlayingFormat, result.NextTrack!.Title, result.NextTrack.Uri),
+            SkipTrackStatus.FinishedQueue => MessageResponses.SkippedFinishedQueue,
+            SkipTrackStatus.InternalException => MessageResponses.InternalEx,
+            SkipTrackStatus.NothingPlaying => MessageResponses.NothingPlaying,
+            SkipTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
+            SkipTrackStatus.PlayerNotConnected => MessageResponses.NothingPlaying,
+            SkipTrackStatus.VoteSubmitted => string.Format(MessageResponses.VotedSkipFormat, result.VotesInfo!.Value.Percentage),
+            SkipTrackStatus.AlreadySubmitted => MessageResponses.AlreadyVotedSkip,
+            _ => MessageResponses.InternalEx,
+        };
+        await RespondAsync(response);
+    }
+
     [SlashCommand("stop", "Stop the player and clears the queue", runMode: RunMode.Async)]
     public async Task Stop()
     {
@@ -343,5 +285,50 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
             _ => MessageResponses.InternalEx,
         };
         await RespondAsync(response);
+    }
+
+    private static async Task UpdateSearchMsg(string selectedSong, SocketMessageComponent ctx)
+    {
+        var searchMsgComponents = ctx.Message.Components;
+        var newBtnsBuilder = new ComponentBuilder();
+        foreach (var btn in from actRow in searchMsgComponents
+                            from comp in actRow.Components
+                            where comp is ButtonComponent
+                            select comp as ButtonComponent)
+        {
+            if (btn.CustomId == $"play:{selectedSong}")
+                newBtnsBuilder.WithButton($"{btn.Label}     ▶️", btn.CustomId, ButtonStyle.Success, disabled: true);
+            else
+                newBtnsBuilder.WithButton(btn.Label, btn.CustomId, btn.Style, disabled: true);
+        }
+
+        await ctx.UpdateAsync(x => x.Components = newBtnsBuilder.Build());
+    }
+
+    private async Task HandlePlayTrackResultAsync(PlayTrackResult result, LavalinkTrack? playedTrackOverride = default)
+    {
+        if (result.IsSuccess)
+        {
+            var track = playedTrackOverride ?? result.Track;
+            var response = result.Status switch
+            {
+                PlayTrackStatus.Playing => string.Format(MessageResponses.PlayingTrackFormat, track.Title, track.Uri),
+                PlayTrackStatus.Queued => string.Format(MessageResponses.QueuedTrackFormat, track.Title, track.Uri),
+                _ => throw new NotImplementedException(),
+            };
+
+            await FollowupAsync(response);
+        }
+        else
+        {
+            var error = result.Status switch
+            {
+                PlayTrackStatus.NoTrackFound => MessageResponses.NoResults,
+                PlayTrackStatus.UserNotInVoiceChannel => MessageResponses.UserNotConnected,
+                _ => MessageResponses.InternalEx
+            };
+
+            await FollowupAsync(error);
+        }
     }
 }
