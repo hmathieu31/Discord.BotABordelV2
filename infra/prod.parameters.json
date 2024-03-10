@@ -4,9 +4,6 @@
   "parameters": {
     "environment": {
       "value": "PROD"
-    },
-    "discordBotToken": {
-      "value": ""
     }
   }
 }

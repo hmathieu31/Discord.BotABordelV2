@@ -37,7 +37,7 @@ param keyVaultBaseName string = 'kv-botabordelv2'
 param lavalinkConfig object = {
   server: {
     password: 'youshallnotpass'
-    address: 'lavalink'
+    address: '0.0.0.0'
     port: '2333'
   }
 }
@@ -242,7 +242,7 @@ resource containerAppLavalink 'Microsoft.App/containerapps@2023-08-01-preview' =
               value: lavalinkConfig.server.password
             }
             {
-              name: 'SERVER_ADDERSS'
+              name: 'SERVER_ADDRESS'
               value: lavalinkConfig.server.address
             }
             {
@@ -329,7 +329,11 @@ resource containerAppDiscordBot 'Microsoft.App/containerapps@2023-08-01-preview'
             }
             {
               name: 'Lavalink__Host'
-              value: containerAppLavalink.properties.outboundIpAddresses[0]
+              value: containerAppLavalink.name
+            }
+            {
+              name: 'Lavalink__Scheme'
+              value: 'http'
             }
             {
               name: 'ConnectionStrings__AppConfig'
