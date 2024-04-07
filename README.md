@@ -64,7 +64,7 @@ This section assumes Docker is used to start the Bot and its dependency.
     -e _JAVA_OPTIONS="-Xmx6G" \
     -e SERVER_PORT=2333 \
     -e LAVALINK_SERVER_PASSWORD=youshallnotpass \
-    -v $(pwd)/application.yaml:/opt/Lavalink/application.yml \
+    -v $(pwd)/Lavalink/application.yml:/opt/Lavalink/application.yml \
     -p 2333:2333 \
     ghcr.io/lavalink-devs/lavalink:4
    ```
