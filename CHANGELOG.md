@@ -1,3 +1,9 @@
+## v2.6.0 (2024-04-13)
+
+### Feat
+
+- ➕ Add OpenTelemetry logging to Azure Monitor
+
 ## v2.5.1 (2024-03-10)
 
 ### Fix
