@@ -1,4 +1,5 @@
 using Azure.Identity;
+using Azure.Monitor.OpenTelemetry.Exporter;
 
 using Discord.BotABordelV2.Configuration;
 using Discord.BotABordelV2.Extensions;
@@ -8,6 +9,7 @@ using Discord.BotABordelV2.Services.Media;
 using Discord.BotABordelV2.Services.Permissions;
 using Discord.BotABordelV2.Services.ShadowBan;
 using Discord.Interactions;
+using Discord.Net;
 using Discord.WebSocket;
 
 using Lavalink4NET.Extensions;
@@ -17,21 +19,30 @@ using Lavalink4NET.InactivityTracking.Trackers.Users;
 
 using Microsoft.Extensions.Azure;
 
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+
 using Serilog;
+
 
 namespace Discord.BotABordelV2;
 
 public static class Program
 {
+    public static bool IsProduction() => Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Production";
+
     public static async Task Main(string[] args)
     {
         var builder = Host.CreateDefaultBuilder(args)
                           .UseConsoleLifetime();
 
-#if !DEBUG
-        // Add Azure App Configuration
-        builder.UseAzureAppConfiguration();
-#endif
+        if (IsProduction())
+        {
+            // Add Azure App Configuration
+            builder.UseAzureAppConfiguration();
+        }
 
         // Configure services
         builder.ConfigureServices((context, services) =>
@@ -46,10 +57,33 @@ public static class Program
                     .AddSingleton<IShadowBanService, ShadowBanService>()
                     .AddSingleton<IGrandEntranceService, GrandEntrancesService>()
                     .AddSingleton<IPermissionsService, PermissionsService>();
+
+            var appInsConn = context.Configuration.GetConnectionString("AppInsights");
+            services.AddOpenTelemetry()
+                    .ConfigureResource(builder => builder.AddService("BotABordel"))
+                    .WithTracing(builder => builder.AddConsoleExporter()
+                                                   .AddAzureMonitorTraceExporter(cfg => cfg.ConnectionString = appInsConn))
+                    .WithMetrics(builder => builder.AddConsoleExporter()
+                                                   .AddAzureMonitorMetricExporter(cfg => cfg.ConnectionString = appInsConn));
         });
 
         // Configure logging
-        builder.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
+        if (IsProduction())
+        {
+            builder.ConfigureLogging((context, config) =>
+            {
+                config.AddSerilog();
+                config.AddOpenTelemetry(logging =>
+                {
+                    logging.AddConsoleExporter()
+                           .AddAzureMonitorLogExporter(cfg => cfg.ConnectionString = context.Configuration.GetConnectionString("AppInsights"));
+                });
+            });
+        }
+        else
+        {
+            builder.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration));
+        }
 
         await builder.Build().RunAsync();
 
