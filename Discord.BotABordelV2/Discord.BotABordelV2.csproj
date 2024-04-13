@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Worker;Microsoft.NET.Sdk.Publish">
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
@@ -21,7 +21,7 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.10.4" />
+    <PackageReference Include="Azure.Identity" Version="1.11.0" />
     <PackageReference Include="Discord.Net" Version="3.13.0" />
     <PackageReference Include="Lavalink4NET" Version="4.0.6" />
     <PackageReference Include="Lavalink4NET.Discord.NET" Version="4.0.6" />
@@ -52,10 +52,8 @@
     <Resource Include="Resources\wide.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Resources\terrorists.mp3">
+    <Resource Include="Resources\terrorists.mp3">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </Resource>
   </ItemGroup>
 </Project>
