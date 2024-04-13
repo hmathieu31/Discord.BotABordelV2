@@ -27,6 +27,10 @@ param containerRegistryNameBase string = 'CRDiscordBotABordelV2'
 @minLength(5)
 param laWorkspaceNameBase string = 'law-botabordelv2'
 
+@description('Name of the Application Insights.')
+@minLength(5)
+param appInsNameBase string = 'appins-botabordelv2'
+
 @description('Path to the Lavalink image.')
 param lavalinkImage string = 'ghcr.io/lavalink-devs/lavalink:4.0.0-beta.4'
 
@@ -56,82 +60,56 @@ var appConfigName = '${appConfigNameBase}-${toUpper(environment)}'
 var managedEnvironmentsName = '${managedEnvironmentsNameBase}-${toUpper(environment)}'
 var containerRegistryName = '${containerRegistryNameBase}${toUpper(environment)}'
 var laWorkspaceName = '${laWorkspaceNameBase}-${toLower(environment)}'
+var appInsName = '${appInsNameBase}-${toLower(environment)}'
 var kvName = '${keyVaultBaseName}-${toLower(environment)}'
-
-var containerAppVolumeName = 'azurefiles'
 var lavalinkContainerName = 'lavalink'
+
 var discordBotContainerName = 'discordbotabordelv2'
 var placeholderImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
-var appConfDataReaderRole = resourceId('Microsoft.Authorization/roleDefinitions', '516239f1-63e1-4d78-a4de-a74fb236a071')
-var acrPullRole = resourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
-var kvSecretsUsersRole = resourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')
+var appConfConnStrKvName = 'appconf-connectionstring'
+var lavalinkPasswordKvName = 'lavalink-password'
 
-resource containerAppEnvironment 'Microsoft.App/managedEnvironments@2023-08-01-preview' = {
-  name: managedEnvironmentsName
-  location: location
-  tags: tags
-  properties: {
-    appLogsConfiguration: {
-      destination: 'log-analytics'
-      logAnalyticsConfiguration: {
-        customerId: logAnalytics.properties.customerId
-        dynamicJsonColumns: true
-        sharedKey: logAnalytics.listKeys().primarySharedKey
-      }
-    }
-  }
-
-  resource azureFiles 'storages@2023-08-01-preview' = {
-    name: 'azurefiles'
-    properties: {
-      azureFile: {
-        accountName: storageAccount.name
-        accountKey: storageAccount.listKeys().keys[0].value
-        shareName: storageAccount::fileService::shares.name
-        accessMode: 'ReadOnly'
-      }
-    }
+module containerApps './modules/containerapps/containerapps.bicep' = {
+  name: 'containerApps'
+  params: {
+    location: location
+    lawCustomerId: logAnalytics.outputs.customerId
+    lawCustomerKey: keyVault.getSecret('law-customerkey')
+    managedEnvironmentsName: managedEnvironmentsName
+    acrUri: containerRegistry.properties.loginServer
+    appConfId: appConfig.id
+    appConfKvSecretUri: first(filter(kvModule.outputs.secretUris, secret => secret.name == appConfConnStrKvName)).uri
+    caDiscordBotName: caDiscordBotName
+    caLavalinkName: caLavalinkName
+    discordBotContainerName: discordBotContainerName
+    lavalinkContainerName: lavalinkContainerName
+    lavalinkImage: lavalinkImage
+    lavalinkConfig: lavalinkConfig
+    discordBotImage: placeholderImage
+    lavalinkPasswordKvSecretUri: first(filter(kvModule.outputs.secretUris, secret => secret.name == lavalinkPasswordKvName)).uri
+    appInsKvSecretUri: logAnalytics.outputs.appInsConnStrKvUri
+    storageAccountName: storageAccountName
+    shareName: storageAccount::fileService::shares.name
+    tags: tags
   }
 }
 
-/************************************************************************************************
- *                                          Key Vault                                          *
- ************************************************************************************************/
-
-resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: kvName
-  location: location
-  properties: {
-    enabledForTemplateDeployment: true
-    tenantId: tenant().tenantId
-    enableRbacAuthorization: true
-    sku: {
-      name: 'standard'
-      family: 'A'
-    }
-  }
 }
 
-resource connStrKvSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: keyVault
-  name: 'appconf-connectionstring'
-  properties: {
-    value: appConfig.listKeys().value[0].value
+module kvModule './modules/keyvault/keyvault.bicep' = {
+  name: 'kvSecrets'
+  params: {
+    location: location
+    kvName: kvName
+    secrets: [
+      { name: 'appconf-connectionstring', value: appConfig.listKeys().value[0].value }
+      { name: 'lavalink-password', value: lavalinkConfig.server.password }
+    ]
   }
 }
-
-resource lavalinkPasswordKvSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  parent: keyVault
-  name: 'lavalink-password'
-  properties: {
-    value: lavalinkConfig.server.password
-  }
-}
-
-/************************************************************************************************
- *                                          Resources                                           *
- ************************************************************************************************/
 
 resource appConfig 'Microsoft.AppConfiguration/configurationStores@2023-03-01' = {
   name: appConfigName
@@ -191,239 +169,13 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   }
 }
 
-/************************************************************************************************
- *                                          Container Apps                                      *
- ************************************************************************************************/
-
-resource containerAppLavalink 'Microsoft.App/containerapps@2023-08-01-preview' = {
-  name: caLavalinkName
-  location: location
-  tags: tags
-  identity: {
-    type: 'None'
+module logAnalytics './modules/loganalyticsworspace/loganalyticsworspace.bicep' = {
+  name: 'logAnalytics'
+  params: {
+    location: location
+    tags: tags
+    applicationInsightsName: appInsName
+    namelaw: laWorkspaceName
+    kvName: kvName
   }
-  properties: {
-    managedEnvironmentId: containerAppEnvironment.id
-    environmentId: containerAppEnvironment.id
-    configuration: {
-      activeRevisionsMode: 'Single'
-      ingress: {
-        external: false
-        targetPort: 2333
-        exposedPort: 2333
-        transport: 'Tcp'
-        traffic: [
-          {
-            weight: 100
-            latestRevision: true
-          }
-        ]
-        allowInsecure: false
-        stickySessions: {
-          affinity: 'none'
-        }
-      }
-    }
-    template: {
-      volumes: [
-        {
-          name: containerAppVolumeName
-          storageType: 'AzureFile'
-          storageName: containerAppEnvironment::azureFiles.name
-        }
-      ]
-      containers: [
-        {
-          image: lavalinkImage
-          name: lavalinkContainerName
-          env: [
-            {
-              name: 'LAVALINK_SERVER_PASSWORD'
-              value: lavalinkConfig.server.password
-            }
-            {
-              name: 'SERVER_ADDRESS'
-              value: lavalinkConfig.server.address
-            }
-            {
-              name: 'LAVALINK_SERVER_SOURCES_LOCAL'
-              value: 'true'
-            }
-            {
-              name: 'SERVER_PORT'
-              value: lavalinkConfig.server.port
-            }
-          ]
-          resources: {
-            cpu: json('0.25')
-            memory: '0.5Gi'
-          }
-          probes: []
-          volumeMounts: [
-            {
-              volumeName: containerAppVolumeName
-              mountPath: '/mount/${containerAppVolumeName}'
-            }
-          ]
-        }
-      ]
-      scale: {
-        minReplicas: 1
-        maxReplicas: 1
-      }
-    }
-  }
-}
-
-resource uaiCaDiscordBot 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' = {
-  name: 'uai-${caDiscordBotName}'
-  location: location
-  tags: tags
-}
-
-resource containerAppDiscordBot 'Microsoft.App/containerapps@2023-08-01-preview' = {
-  name: caDiscordBotName
-  tags: tags
-  identity: {
-    userAssignedIdentities: {
-      '${uaiCaDiscordBot.id}': {}
-    }
-    type: 'UserAssigned'
-  }
-  location: location
-  dependsOn: [
-    kvSecretsUsersAssignment
-  ]
-  properties: {
-    environmentId: containerAppEnvironment.id
-    configuration: {
-      secrets: [
-        {
-          name: 'appconf-connectionstring'
-          keyVaultUrl: connStrKvSecret.properties.secretUri
-          identity: uaiCaDiscordBot.id
-        }
-        {
-          name: 'lavalink-password'
-          keyVaultUrl: lavalinkPasswordKvSecret.properties.secretUri
-          identity: uaiCaDiscordBot.id
-        }
-      ]
-      activeRevisionsMode: 'Single'
-      registries: [
-        {
-          identity: uaiCaDiscordBot.id
-          server: containerRegistry.properties.loginServer
-        }
-      ]
-    }
-    template: {
-      containers: [
-        {
-          name: discordBotContainerName
-          image: placeholderImage
-          env: [
-            {
-              name: 'Lavalink__Password'
-              secretRef: 'lavalink-password'
-            }
-            {
-              name: 'Lavalink__Host'
-              value: containerAppLavalink.name
-            }
-            {
-              name: 'Lavalink__Scheme'
-              value: 'http'
-            }
-            {
-              name: 'ConnectionStrings__AppConfig'
-              secretRef: 'appconf-connectionstring'
-            }
-          ]
-          resources: {
-            cpu: json('0.5')
-            memory: '1Gi'
-          }
-          probes: []
-          volumeMounts: [
-            {
-              volumeName: containerAppVolumeName
-              mountPath: '/mount/${containerAppVolumeName}'
-            }
-          ]
-        }
-      ]
-      scale: {
-        minReplicas: 1
-        maxReplicas: 1
-      }
-      volumes: [
-        {
-          name: containerAppVolumeName
-          storageType: 'AzureFile'
-          storageName: containerAppEnvironment::azureFiles.name
-        }
-      ]
-    }
-  }
-}
-
-resource serviceCoAppConfig 'Microsoft.ServiceLinker/linkers@2022-11-01-preview' = {
-  scope: containerAppDiscordBot
-  name: 'serviceco_appconfig_b17cc'
-  properties: {
-    clientType: 'dotnet'
-    targetService: {
-      type: 'AzureResource'
-      id: appConfig.id
-    }
-    authInfo: {
-      authType: 'userAssignedIdentity'
-      clientId: uaiCaDiscordBot.properties.clientId
-      subscriptionId: subscription().subscriptionId
-    }
-    scope: 'discordbotabordelv2'
-  }
-}
-
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
-  name: laWorkspaceName
-  tags: tags
-  location: location
-  properties: {
-    sku: {
-      name: 'PerGB2018'
-    }
-    workspaceCapping: {
-      dailyQuotaGb: json('0.1')
-    }
-    retentionInDays: 30
-  }
-}
-
-resource appConfReaderAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
-  name: guid(resourceGroup().id, uaiCaDiscordBot.id, appConfDataReaderRole)
-  properties: {
-    roleDefinitionId: appConfDataReaderRole
-    principalId: uaiCaDiscordBot.properties.principalId
-  }
-  scope: resourceGroup()
-}
-
-resource acrPullAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
-  name: guid(resourceGroup().id, uaiCaDiscordBot.id, acrPullRole)
-  properties: {
-    roleDefinitionId: acrPullRole
-    principalId: uaiCaDiscordBot.properties.principalId
-  }
-  scope: resourceGroup()
-}
-
-resource kvSecretsUsersAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
-  name: guid(resourceGroup().id, uaiCaDiscordBot.id, kvSecretsUsersRole)
-  properties: {
-    roleDefinitionId: kvSecretsUsersRole
-    principalId: uaiCaDiscordBot.properties.principalId
-  }
-  scope: resourceGroup()
 }
