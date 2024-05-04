@@ -7,4 +7,6 @@ public class EmotesOptions
     public required string YouTubeEmoteId { get; set; }
 
     public required string SoundCloudEmoteId { get; set; }
+
+    public required string SpotifyEmoteId { get; set; }
 }

@@ -143,6 +143,7 @@ public abstract class MediaServiceBase(ILogger logger,
             {
                 PlaySource.YouTube => TrackSearchMode.YouTube,
                 PlaySource.SoundCloud => TrackSearchMode.SoundCloud,
+                PlaySource.Spotify => TrackSearchMode.Spotify,
                 _ => throw new NotImplementedException($"Search is not implemented for source {source}")
             };
 
@@ -251,6 +252,7 @@ public abstract class MediaServiceBase(ILogger logger,
         {
             PlaySource.YouTube => await AudioService.Tracks.LoadTrackAsync(track, TrackSearchMode.YouTube),
             PlaySource.SoundCloud => await AudioService.Tracks.LoadTrackAsync(track, TrackSearchMode.SoundCloud),
+            PlaySource.Spotify => await AudioService.Tracks.LoadTrackAsync(track, TrackSearchMode.Spotify),
             PlaySource.Local => await AudioService.Tracks.LoadTrackAsync(
                 Path.GetFullPath(track),
                 new TrackLoadOptions(

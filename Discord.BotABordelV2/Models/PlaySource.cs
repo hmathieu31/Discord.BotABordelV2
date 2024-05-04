@@ -6,7 +6,6 @@ public enum PlaySource
 {
     YouTube,
     SoundCloud,
-    // Spotify, TODO: Implement Spotify
-    [Hide]
-    Local
+    Spotify,
+    [Hide] Local
 }

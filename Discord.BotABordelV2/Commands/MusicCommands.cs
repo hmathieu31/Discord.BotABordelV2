@@ -354,6 +354,7 @@ public sealed class MusicCommands(StandardMediaService mediaService,
         {
             PlaySource.YouTube => Emote.Parse(emotesOptions.Value.YouTubeEmoteId),
             PlaySource.SoundCloud => Emote.Parse(emotesOptions.Value.SoundCloudEmoteId),
+            PlaySource.Spotify => Emote.Parse(emotesOptions.Value.SpotifyEmoteId),
             PlaySource.Local => throw new NotImplementedException(),
             _ => throw new NotImplementedException(),
         };

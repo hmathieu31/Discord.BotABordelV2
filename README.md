@@ -41,6 +41,7 @@ This section assumes Docker is used to start the Bot and its dependency.
 - Create a Discord App and generate a bot token at [Discord Developer](https://discord.com/developers/applications).
   - Connect Bot to a server
   - Permissions include: [Slash Commands, Send Messages, Connect, Speak]
+- To test playback from Spotify, an Spotify Application must be created with a generated client secret [Spotify Developer](https://developer.spotify.com/dashboard)
 
 ### Installation
 
@@ -62,10 +63,9 @@ This section assumes Docker is used to start the Bot and its dependency.
     --name lavalink \
     --restart unless-stopped \
     -e _JAVA_OPTIONS="-Xmx6G" \
-    -e SERVER_PORT=2333 \
-    -e LAVALINK_SERVER_PASSWORD=youshallnotpass \
-    -v $(pwd)/application.yaml:/opt/Lavalink/application.yml \
-    -p 2333:2333 \
+    -e PLUGINS_SPOTIFY_CLIENT_ID="<your-spotify-app-clientid>" \
+    -e PLUGINS_SPOTIFY_CLIENT_SECRET="<your-spotify-app-secret>" \
+    -v $(pwd)/Lavalink/application.yml:/opt/Lavalink/application.yml \
     ghcr.io/lavalink-devs/lavalink:4
    ```
 

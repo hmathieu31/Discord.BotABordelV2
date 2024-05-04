@@ -1,6 +1,6 @@
 server: # REST and WS server
   port: 2333
-  address: 127.0.0.1
+  address: 0.0.0.0
   http2:
     enabled: true # Whether to enable HTTP/2 support
 spring:
@@ -55,6 +55,11 @@ lavalink:
       #proxyUser: "" # Optional user for basic authentication fields, leave blank if you don't use basic auth
       #proxyPassword: "" # Password for basic authentication
 
+  plugin:
+    - dependency: 'com.github.topi314.lavasearch:lavasearch-plugin:1.0.0'
+    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.0.1"
+
+
 metrics:
   prometheus:
     enabled: false
@@ -88,3 +93,13 @@ logging:
     rollingpolicy:
       max-file-size: 1GB
       max-history: 30
+
+plugins:
+  sources:
+    spotify: true
+  spotify:
+    clientId: "passed through environment variable PLUGINS_SPOTIFY_CLIENT_ID"
+    clientSecret: "passed through environment variable PLUGINS_SPOTIFY_CLIENT_SECRET"
+    countryCode: "FR"
+    playlistLoadLimit: 6 # The number of pages at 100 tracks each
+    albumLoadLimit: 6 # The number of pages at 50 tracks eac
