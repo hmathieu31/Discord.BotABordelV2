@@ -2,7 +2,7 @@
 
 public class LavalinkOptions
 {
-    public const string ConfigSectionName = "Lavalink";
+    public const string SectionName = "Lavalink";
 
     public string Host { get; set; } = null!;
 

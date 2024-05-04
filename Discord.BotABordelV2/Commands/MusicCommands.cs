@@ -1,4 +1,4 @@
-using Discord.BotABordelV2.Configuration;
+﻿using Discord.BotABordelV2.Configuration;
 using Discord.BotABordelV2.Constants;
 using Discord.BotABordelV2.Interfaces;
 using Discord.BotABordelV2.Models;
@@ -23,6 +23,8 @@ public sealed class MusicCommands(StandardMediaService mediaService,
                      IOptions<EmotesOptions> emotesOptions) : InteractionModuleBase<SocketInteractionContext>
 
 {
+    private List<Uri> _searchedTracksUris = [];
+
     [SlashCommand("pause", "Pause current track", runMode: RunMode.Async)]
     public async Task Pause()
     {
@@ -48,7 +50,6 @@ public sealed class MusicCommands(StandardMediaService mediaService,
     }
 
     [SlashCommand("play", "Play a song", runMode: RunMode.Async)]
-    [ComponentInteraction("play:*", runMode: RunMode.Async)]
     public async Task Play(
         [Summary("Song", "The song to play")] string song,
         [Summary("Source", "The source from where to search the track")] PlaySource source = PlaySource.YouTube
@@ -60,6 +61,7 @@ public sealed class MusicCommands(StandardMediaService mediaService,
             if (Context.Interaction is not SocketMessageComponent)
                 await DeferAsync();
 
+            var sourceEmote = GetSourceEmote(source);
             IVoiceChannel? channel = (Context.User as IGuildUser)?.VoiceChannel;
             if (channel is null)
             {
@@ -71,11 +73,11 @@ public sealed class MusicCommands(StandardMediaService mediaService,
             if (result.Status is PlayTrackStatus.TrackBanned)
             {
                 var res = await trollMediaService.PlayTrackAsync(song, channel, source);
-                await HandlePlayTrackResultAsync(res, result.Track);
+                await HandlePlayTrackResultAsync(res, sourceEmote, result.Track);
                 return;
             }
 
-            await HandlePlayTrackResultAsync(result);
+            await HandlePlayTrackResultAsync(result, sourceEmote);
         }
         catch (Exception ex)
         {
@@ -215,8 +217,10 @@ public sealed class MusicCommands(StandardMediaService mediaService,
                     buttonsBuilder.WithButton($"{i}", $"play:{queryIndex},{i - 1},{source}", ButtonStyle.Primary);
                 }
 
+                var sourceEmote = GetSourceEmote(source);
+
                 await FollowupAsync(
-                    string.Format(MessageResponses.SeachTracksFormat, result.FoundTracks!.Count()),
+                   sourceEmote + string.Format(MessageResponses.SeachTracksFormat, result.FoundTracks!.Count()),
                     embeds: [.. searchEmbeds],
                     components: buttonsBuilder.Build());
             }
@@ -318,12 +322,12 @@ public sealed class MusicCommands(StandardMediaService mediaService,
         await ctx.UpdateAsync(x => x.Components = newBtnsBuilder.Build());
     }
 
-    private async Task HandlePlayTrackResultAsync(PlayTrackResult result, LavalinkTrack? playedTrackOverride = default)
+    private async Task HandlePlayTrackResultAsync(PlayTrackResult result, IEmote sourceEmote, LavalinkTrack? playedTrackOverride = default)
     {
         if (result.IsSuccess)
         {
             var track = playedTrackOverride ?? result.Track;
-            var response = result.Status switch
+            var response = sourceEmote + result.Status switch
             {
                 PlayTrackStatus.Playing => string.Format(MessageResponses.PlayingTrackFormat, track.Title, track.Uri),
                 PlayTrackStatus.Queued => string.Format(MessageResponses.QueuedTrackFormat, track.Title, track.Uri),
@@ -344,4 +348,13 @@ public sealed class MusicCommands(StandardMediaService mediaService,
             await FollowupAsync(error);
         }
     }
+
+    private Emote GetSourceEmote(PlaySource source) =>
+        source switch
+        {
+            PlaySource.YouTube => Emote.Parse(emotesOptions.Value.YouTubeEmoteId),
+            PlaySource.SoundCloud => Emote.Parse(emotesOptions.Value.SoundCloudEmoteId),
+            PlaySource.Local => throw new NotImplementedException(),
+            _ => throw new NotImplementedException(),
+        };
 }

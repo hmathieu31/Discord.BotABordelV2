@@ -2,7 +2,7 @@
 
 public class DiscordBotOptions
 {
-    public const string ConfigSectionName = "DiscordBot";
+    public const string SectionName = "DiscordBot";
 
     public List<EntrancesEvent> EntrancesEvents { get; set; } = null!;
 
