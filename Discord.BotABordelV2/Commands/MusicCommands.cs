@@ -1,19 +1,26 @@
-﻿using Discord.BotABordelV2.Constants;
+using Discord.BotABordelV2.Configuration;
+using Discord.BotABordelV2.Constants;
 using Discord.BotABordelV2.Interfaces;
+using Discord.BotABordelV2.Models;
 using Discord.BotABordelV2.Models.Results;
+using Discord.BotABordelV2.Services;
 using Discord.BotABordelV2.Services.Media;
 using Discord.Interactions;
 using Discord.WebSocket;
 
 using Lavalink4NET.Tracks;
 
+using Microsoft.Extensions.Options;
+
 namespace Discord.BotABordelV2.Commands;
 
 [RequireContext(ContextType.Guild)]
-public sealed class MusicCommands(StreamingMediaService mediaService,
+public sealed class MusicCommands(StandardMediaService mediaService,
                      TrollMediaService trollMediaService,
                      IPermissionsService permissionsService,
-                     ILogger<MusicCommands> logger) : InteractionModuleBase<SocketInteractionContext>
+                     ILogger<MusicCommands> logger,
+                     ISearchCacheService searchCache,
+                     IOptions<EmotesOptions> emotesOptions) : InteractionModuleBase<SocketInteractionContext>
 
 {
     [SlashCommand("pause", "Pause current track", runMode: RunMode.Async)]
@@ -43,22 +50,15 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
     [SlashCommand("play", "Play a song", runMode: RunMode.Async)]
     [ComponentInteraction("play:*", runMode: RunMode.Async)]
     public async Task Play(
-        [Summary("Song", "The song to play")] string song
+        [Summary("Song", "The song to play")] string song,
+        [Summary("Source", "The source from where to search the track")] PlaySource source = PlaySource.YouTube
         )
     {
         try
         {
-            // If the command is called from a button, modify the original message
-            var ctx = Context.Interaction as SocketMessageComponent;
-
-            if (ctx is not null)
-            {
-                await UpdateSearchMsg(song, ctx);
-            }
-            else
-            {
+            // If the command is called from a button, the interaction was already deferred
+            if (Context.Interaction is not SocketMessageComponent)
                 await DeferAsync();
-            }
 
             IVoiceChannel? channel = (Context.User as IGuildUser)?.VoiceChannel;
             if (channel is null)
@@ -67,10 +67,10 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
                 return;
             }
 
-            var result = await mediaService.PlayTrackAsync(song, channel);
+            var result = await mediaService.PlayTrackAsync(song, channel, source);
             if (result.Status is PlayTrackStatus.TrackBanned)
             {
-                var res = await trollMediaService.PlayTrackAsync(song, channel);
+                var res = await trollMediaService.PlayTrackAsync(song, channel, source);
                 await HandlePlayTrackResultAsync(res, result.Track);
                 return;
             }
@@ -82,6 +82,17 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
             logger.LogError(ex, "Error while playing track");
             await FollowupAsync(MessageResponses.InternalEx);
         }
+    }
+
+    [ComponentInteraction("play:*,*,*", runMode: RunMode.Async)]
+    public async Task PlaySearchedTrack(string queryKey, int trackIndex, PlaySource source)
+    {
+        // If the command is called from a button, modify the original message
+        var ctx = Context.Interaction as SocketMessageComponent;
+
+        await UpdateSearchMsg(queryKey, trackIndex, ctx!);
+
+        await Play(searchCache.PopSearchedUri(Guid.Parse(queryKey), trackIndex).ToString(), source);
     }
 
     [SlashCommand("queue", "Display queue of tracks", runMode: RunMode.Async)]
@@ -175,20 +186,22 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
 
     [SlashCommand("search", "Search for a song", runMode: RunMode.Async)]
     public async Task Search(
-        [Summary("Song", "The song to search for")] string song
+        [Summary("Song", "The song to search for")] string song,
+        [Summary("Source", "The source from where to search the track")] PlaySource source = PlaySource.YouTube
         )
     {
         await DeferAsync();
 
         try
         {
-            var result = await mediaService.SearchTrackAsync(song);
+            var result = await mediaService.SearchTrackAsync(song, source);
             if (result.IsSuccess)
             {
                 List<Embed> searchEmbeds = [];
                 var buttonsBuilder = new ComponentBuilder();
 
                 var i = 0;
+                var queryIndex = searchCache.AddSearchResults(result.FoundTracks.Select(t => t.Uri!).ToList());
                 foreach (var track in result.FoundTracks!)
                 {
                     i++;
@@ -199,7 +212,7 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
                                     .WithThumbnailUrl(track.ArtworkUri?.ToString())
                                     .Build());
 
-                    buttonsBuilder.WithButton($"{i}", $"play:{track.Uri!}", ButtonStyle.Primary);
+                    buttonsBuilder.WithButton($"{i}", $"play:{queryIndex},{i - 1},{source}", ButtonStyle.Primary);
                 }
 
                 await FollowupAsync(
@@ -287,7 +300,7 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
         await RespondAsync(response);
     }
 
-    private static async Task UpdateSearchMsg(string selectedSong, SocketMessageComponent ctx)
+    private static async Task UpdateSearchMsg(string selectedQueryKey, int selectedTrackIndex, SocketMessageComponent ctx)
     {
         var searchMsgComponents = ctx.Message.Components;
         var newBtnsBuilder = new ComponentBuilder();
@@ -296,7 +309,7 @@ public sealed class MusicCommands(StreamingMediaService mediaService,
                             where comp is ButtonComponent
                             select comp as ButtonComponent)
         {
-            if (btn.CustomId == $"play:{selectedSong}")
+            if (btn.CustomId == $"play:{selectedQueryKey},{selectedTrackIndex}")
                 newBtnsBuilder.WithButton($"{btn.Label}     ▶️", btn.CustomId, ButtonStyle.Success, disabled: true);
             else
                 newBtnsBuilder.WithButton(btn.Label, btn.CustomId, btn.Style, disabled: true);

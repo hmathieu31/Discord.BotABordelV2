@@ -1,5 +1,6 @@
 ﻿using Discord.BotABordelV2.Configuration;
 using Discord.BotABordelV2.Interfaces;
+using Discord.BotABordelV2.Models;
 using Discord.BotABordelV2.Models.Results;
 using Discord.BotABordelV2.Models.Tracks;
 using Discord.BotABordelV2.Players;
@@ -8,12 +9,13 @@ using Lavalink4NET;
 using Lavalink4NET.Players;
 using Lavalink4NET.Players.Vote;
 using Lavalink4NET.Rest.Entities.Tracks;
+using Lavalink4NET.Tracks;
 
 using Microsoft.Extensions.Options;
 
 namespace Discord.BotABordelV2.Services.Media;
 
-public abstract class MediaService(ILogger logger,
+public abstract class MediaServiceBase(ILogger logger,
                                 IAudioService audioService,
                                 IOptionsMonitor<DiscordBotOptions> botOptions) : IMediaService
 {
@@ -107,7 +109,7 @@ public abstract class MediaService(ILogger logger,
         }
     }
 
-    public abstract Task<PlayTrackResult> PlayTrackAsync(string track, IVoiceChannel channel);
+    public abstract Task<PlayTrackResult> PlayTrackAsync(string track, IVoiceChannel channel, PlaySource source);
 
     public async Task<ResumeTrackResult> ResumeTrackAsync(IVoiceChannel channel)
     {
@@ -131,19 +133,25 @@ public abstract class MediaService(ILogger logger,
         }
     }
 
-    public async Task<SearchTrackResult> SearchTrackAsync(string trackTitle)
+    public async Task<SearchTrackResult> SearchTrackAsync(string trackTitle, PlaySource source)
     {
-        var returedTracksNb = botOptions.CurrentValue.TracksReturnedPerSearch;
+        var returnedTracksNb = botOptions.CurrentValue.TracksReturnedPerSearch;
 
         try
         {
-            var searchResult = await audioService.Tracks
-                                .LoadTracksAsync(trackTitle, TrackSearchMode.YouTube);
+            var searchMode = source switch
+            {
+                PlaySource.YouTube => TrackSearchMode.YouTube,
+                PlaySource.SoundCloud => TrackSearchMode.SoundCloud,
+                _ => throw new NotImplementedException($"Search is not implemented for source {source}")
+            };
+
+            var searchResult = await audioService.Tracks.LoadTracksAsync(trackTitle, searchMode);
 
             if (!searchResult.IsSuccess)
                 return new SearchTrackResult(SearchTrackStatus.NoTrackFound);
 
-            return new SearchTrackResult(searchResult.Tracks.Take(returedTracksNb));
+            return new SearchTrackResult(searchResult.Tracks.Take(returnedTracksNb));
         }
         catch (Exception ex)
         {
@@ -237,4 +245,16 @@ public abstract class MediaService(ILogger logger,
 
         return result.Player;
     }
+
+    protected async Task<LavalinkTrack?> LoadTrackFromSourceAsync(string track, PlaySource source) =>
+        source switch
+        {
+            PlaySource.YouTube => await AudioService.Tracks.LoadTrackAsync(track, TrackSearchMode.YouTube),
+            PlaySource.SoundCloud => await AudioService.Tracks.LoadTrackAsync(track, TrackSearchMode.SoundCloud),
+            PlaySource.Local => await AudioService.Tracks.LoadTrackAsync(
+                Path.GetFullPath(track),
+                new TrackLoadOptions(
+                    StrictSearch: false)),
+            _ => throw new NotImplementedException($"No source type {source}")
+        };
 }

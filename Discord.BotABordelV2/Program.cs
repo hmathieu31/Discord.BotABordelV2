@@ -51,9 +51,10 @@ public static class Program
                     .AddDiscordBotOptions(context)
                     .AddDiscordClient()
                     .AddLavalink(context)
-                    .AddSingleton<StreamingMediaService>()
-                    .AddSingleton<LocalMediaService>()
+                    .AddSingleton<StandardMediaService>()
+                    .AddSingleton<GrandEntranceMediaService>()
                     .AddSingleton<TrollMediaService>()
+                    .AddSingleton<ISearchCacheService, SearchCacheService>()
                     .AddSingleton<IShadowBanService, ShadowBanService>()
                     .AddSingleton<IGrandEntranceService, GrandEntrancesService>()
                     .AddSingleton<IPermissionsService, PermissionsService>();

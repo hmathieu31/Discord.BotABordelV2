@@ -1,5 +1,6 @@
 ﻿using Discord.BotABordelV2.Configuration;
 using Discord.BotABordelV2.Interfaces;
+using Discord.BotABordelV2.Models;
 using Discord.BotABordelV2.Models.Results;
 
 using Lavalink4NET;
@@ -9,20 +10,26 @@ using Microsoft.Extensions.Options;
 
 namespace Discord.BotABordelV2.Services.Media;
 
-public class StreamingMediaService(ILogger<StreamingMediaService> logger,
+/// <summary>
+/// A standard media service for handling media playback from multiple sources in a voice channel.
+/// </summary>
+/// <seealso cref="Discord.BotABordelV2.Services.Media.MediaServiceBase" />
+/// <seealso cref="Discord.BotABordelV2.Interfaces.IMediaService" />
+public class StandardMediaService(ILogger<StandardMediaService> logger,
                              IAudioService audioService,
                              IShadowBanService shadowBanService,
-                             IOptionsMonitor<DiscordBotOptions> botOptions) : MediaService(logger, audioService, botOptions), IMediaService
+                             IOptionsMonitor<DiscordBotOptions> botOptions) : MediaServiceBase(logger, audioService, botOptions), IMediaService
 {
-    public override async Task<PlayTrackResult> PlayTrackAsync(string track, IVoiceChannel channel)
+    public override async Task<PlayTrackResult> PlayTrackAsync(string track, IVoiceChannel channel, PlaySource source)
     {
         if (string.IsNullOrEmpty(track))
             throw new ArgumentException($"'{nameof(track)}' cannot be null or empty.", nameof(track));
 
-        var player = await GetPlayerAsync(channel)
-            ?? throw new Exceptions.MediaExceptions.NullChannelConnectionException($"Channel connection to '{channel.Name}' failed");
+        var player = await GetPlayerAsync(channel);
+        if (player is null)
+            return new PlayTrackResult(PlayTrackStatus.PlayerUnavailable);
 
-        var foundTrack = await AudioService.Tracks.LoadTrackAsync(track, TrackSearchMode.YouTube);
+        var foundTrack = await LoadTrackFromSourceAsync(track, source);
 
         if (foundTrack is null)
         {
