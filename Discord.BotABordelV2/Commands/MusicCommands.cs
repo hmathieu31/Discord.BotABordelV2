@@ -23,8 +23,6 @@ public sealed class MusicCommands(StandardMediaService mediaService,
                      IOptions<EmotesOptions> emotesOptions) : InteractionModuleBase<SocketInteractionContext>
 
 {
-    private List<Uri> _searchedTracksUris = [];
-
     [SlashCommand("pause", "Pause current track", runMode: RunMode.Async)]
     public async Task Pause()
     {
