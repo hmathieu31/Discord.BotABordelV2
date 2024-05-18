@@ -1,4 +1,5 @@
-﻿using Discord.BotABordelV2.Models.Results;
+﻿using Discord.BotABordelV2.Models;
+using Discord.BotABordelV2.Models.Results;
 
 namespace Discord.BotABordelV2.Interfaces;
 
@@ -26,10 +27,15 @@ public interface IMediaService
     /// <summary>
     /// Plays a track in the specified voice channel.
     /// </summary>
-    /// <param name="track">The track to play.</param>
+    /// <param name="track">
+    /// The track to play.
+    /// An URI or search query when <see cref="PlaySource"/> is a streaming service.
+    /// A file path when <see cref="PlaySource"/> is <see cref="PlaySource.Local"/>.
+    /// </param>
     /// <param name="channel">The voice channel to play the track in.</param>
+    /// <param name="source">The source from where to search the track (YT, Spotify...)</param>
     /// <returns>The result of playing the track.</returns>
-    Task<PlayTrackResult> PlayTrackAsync(string track, IVoiceChannel channel);
+    Task<PlayTrackResult> PlayTrackAsync(string track, IVoiceChannel channel, PlaySource source);
 
     /// <summary>
     /// Resumes playback of a track in the specified voice channel.
@@ -41,11 +47,12 @@ public interface IMediaService
     /// <summary>
     /// Searches for a track asynchronously.
     /// </summary>
-    /// <param name="track">The track to search for.</param>
+    /// <param name="trackTitle">The track to search for.</param>
+    /// <param name="source">The source from where to search the track (YT, Spotify...)</param>
     /// <returns>
     /// A task that represents the asynchronous operation. The task result contains the search track result.
     /// </returns>
-    Task<SearchTrackResult> SearchTrackAsync(string trackTitle);
+    Task<SearchTrackResult> SearchTrackAsync(string trackTitle, PlaySource source);
 
     /// <summary>
     /// Stops the player in the specified voice channel.

@@ -51,9 +51,10 @@ public static class Program
                     .AddDiscordBotOptions(context)
                     .AddDiscordClient()
                     .AddLavalink(context)
-                    .AddSingleton<StreamingMediaService>()
-                    .AddSingleton<LocalMediaService>()
+                    .AddSingleton<StandardMediaService>()
+                    .AddSingleton<GrandEntranceMediaService>()
                     .AddSingleton<TrollMediaService>()
+                    .AddSingleton<ISearchCacheService, SearchCacheService>()
                     .AddSingleton<IShadowBanService, ShadowBanService>()
                     .AddSingleton<IGrandEntranceService, GrandEntrancesService>()
                     .AddSingleton<IPermissionsService, PermissionsService>();
@@ -175,13 +176,15 @@ public static class Program
         var config = context.Configuration;
 
         services.AddOptionsWithValidateOnStart<DiscordBotOptions>()
-                .Bind(config.GetRequiredSection(DiscordBotOptions.ConfigSectionName));
+                .Bind(config.GetRequiredSection(DiscordBotOptions.SectionName));
         services.AddOptionsWithValidateOnStart<LavalinkOptions>()
-                .Bind(config.GetRequiredSection(LavalinkOptions.ConfigSectionName));
+                .Bind(config.GetRequiredSection(LavalinkOptions.SectionName));
         services.AddOptionsWithValidateOnStart<PermissionsOptions>()
-                .Bind(config.GetRequiredSection(PermissionsOptions.ConfigSectionName));
+                .Bind(config.GetRequiredSection(PermissionsOptions.SectionName));
         services.AddOptionsWithValidateOnStart<ShadowBanOptions>()
-                .Bind(config.GetRequiredSection(ShadowBanOptions.ConfigSectionName));
+                .Bind(config.GetRequiredSection(ShadowBanOptions.SectionName));
+        services.AddOptionsWithValidateOnStart<EmotesOptions>()
+                .Bind(config.GetSection(EmotesOptions.SectionName));
 
         return services;
     }

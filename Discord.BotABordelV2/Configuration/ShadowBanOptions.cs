@@ -2,7 +2,7 @@
 
 public class ShadowBanOptions
 {
-    public const string ConfigSectionName = "ShadowBan";
+    public const string SectionName = "ShadowBan";
 
     public List<string> BannedKeywords { get; set; } = [];
 

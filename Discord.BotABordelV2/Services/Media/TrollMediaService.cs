@@ -1,4 +1,5 @@
 ﻿using Discord.BotABordelV2.Configuration;
+using Discord.BotABordelV2.Models;
 using Discord.BotABordelV2.Models.Results;
 
 using Lavalink4NET;
@@ -14,14 +15,14 @@ namespace Discord.BotABordelV2.Services.Media;
 public class TrollMediaService(IAudioService audioService,
             IOptionsMonitor<DiscordBotOptions> options,
             IOptionsMonitor<ShadowBanOptions> banOptions,
-            ILogger<TrollMediaService> logger) : MediaService(logger, audioService, options)
+            ILogger<TrollMediaService> logger) : MediaServiceBase(logger, audioService, options)
 {
     /// <summary>
     /// Plays a troll track in the specified channel instead of specified track.
     /// </summary>
     /// <param name="channel">The channel.</param>
     /// <returns></returns>
-    public override async Task<PlayTrackResult> PlayTrackAsync(string track, IVoiceChannel channel)
+    public override async Task<PlayTrackResult> PlayTrackAsync(string track, IVoiceChannel channel, PlaySource source)
     {
         try
         {

@@ -41,6 +41,7 @@ This section assumes Docker is used to start the Bot and its dependency.
 - Create a Discord App and generate a bot token at [Discord Developer](https://discord.com/developers/applications).
   - Connect Bot to a server
   - Permissions include: [Slash Commands, Send Messages, Connect, Speak]
+- To test playback from Spotify, an Spotify Application must be created with a generated client secret [Spotify Developer](https://developer.spotify.com/dashboard)
 
 ### Installation
 
@@ -51,25 +52,27 @@ This section assumes Docker is used to start the Bot and its dependency.
    git clone https://github.com/hmathieu31/Discord.BotABordelV2.git
    ```
 
-3. Pull and Run Lavalink image
+3. In `Lavalink`, copy `.env.template` into `.env` and fill with your configuration.
+4. Pull and Run Lavalink image
 
    ```sh
    docker pull ghcr.io/lavalink-devs/lavalink:4
    ```
 
+   At repository root, run
+  
    ```sh
-   docker run -d \
+    docker run -d \
     --name lavalink \
     --restart unless-stopped \
     -e _JAVA_OPTIONS="-Xmx6G" \
-    -e SERVER_PORT=2333 \
-    -e LAVALINK_SERVER_PASSWORD=youshallnotpass \
-    -v $(pwd)/application.yaml:/opt/Lavalink/application.yml \
+    --env-file ./Lavalink/.env \
+    -v $(pwd)/Lavalink/application.yml:/opt/Lavalink/application.yml \
     -p 2333:2333 \
     ghcr.io/lavalink-devs/lavalink:4
    ```
 
-4. Enter your generated token in User Secrets (In Visual Studio, VS Code with [extension](https://marketplace.visualstudio.com/items?itemName=adrianwilczynski.user-secrets), or through environment variables) and add lavalink config
+5. Enter your generated token in User Secrets (In Visual Studio, VS Code with [extension](https://marketplace.visualstudio.com/items?itemName=adrianwilczynski.user-secrets), or through environment variables) and add lavalink config
 
    ```json
    {
@@ -78,7 +81,7 @@ This section assumes Docker is used to start the Bot and its dependency.
    }
    ```
 
-5. Build Bot
+6. Build Bot
 
    ```sh
    dotnet build
