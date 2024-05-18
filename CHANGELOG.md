@@ -1,3 +1,19 @@
+## v2.7.0 (2024-05-18)
+
+### Feat
+
+- ✨ Add source choice when playing / searching
+
+### Fix
+
+- 🚨 Code cleanup
+- ⬆️ Upgrade Youtube source to new plugin
+
+### Refactor
+
+- Add Spotify play source
+- 💄 Add emotes for play sources
+
 ## v2.6.0 (2024-04-13)
 
 ### Feat
