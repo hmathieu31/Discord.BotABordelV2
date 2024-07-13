@@ -4,6 +4,12 @@
   "parameters": {
     "environment": {
       "value": "PROD"
+    },
+    "lavalinkImage": {
+      "value": "ghcr.io/lavalink-devs/lavalink:v4-update-lp-alpine"
+    },
+    "discordBotImage": {
+      "value": "crdiscordbotabordelv2prod.azurecr.io/discordbotabordelv2:latest"
     }
   }
 }

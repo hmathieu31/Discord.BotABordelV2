@@ -34,6 +34,9 @@ param appInsNameBase string = 'appins-botabordelv2'
 @description('Path to the Lavalink image.')
 param lavalinkImage string = 'ghcr.io/lavalink-devs/lavalink:4.0.0-beta.4'
 
+@description('Path to the DiscordBot image.')
+param discordBotImage string = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+
 @description('Name of the Key Vault.')
 param keyVaultBaseName string = 'kv-botabordelv2'
 
@@ -65,7 +68,6 @@ var kvName = '${keyVaultBaseName}-${toLower(environment)}'
 var lavalinkContainerName = 'lavalink'
 
 var discordBotContainerName = 'discordbotabordelv2'
-var placeholderImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
 var appConfConnStrKvName = 'appconf-connectionstring'
 var lavalinkPasswordKvName = 'lavalink-password'
@@ -86,7 +88,7 @@ module containerApps './modules/containerapps/containerapps.bicep' = {
     lavalinkContainerName: lavalinkContainerName
     lavalinkImage: lavalinkImage
     lavalinkConfig: lavalinkConfig
-    discordBotImage: placeholderImage
+    discordBotImage: discordBotImage
     lavalinkPasswordKvSecretUri: first(filter(kvModule.outputs.secretUris, secret => secret.name == lavalinkPasswordKvName)).uri
     appInsKvSecretUri: logAnalytics.outputs.appInsConnStrKvUri
     storageAccountName: storageAccountName

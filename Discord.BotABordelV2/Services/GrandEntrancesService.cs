@@ -8,7 +8,7 @@ namespace Discord.BotABordelV2.Services;
 
 public class GrandEntrancesService(IServiceScopeFactory scopeFactory,
                         ILogger<GrandEntrancesService> logger,
-                        LocalMediaService mediaService) : IGrandEntranceService
+                        GrandEntranceMediaService mediaService) : IGrandEntranceService
 {
     private const int _SCENARIO_TRIGGER_PERCENT_CHANCE = 50;
 
@@ -29,7 +29,7 @@ public class GrandEntrancesService(IServiceScopeFactory scopeFactory,
             {
                 logger.LogDebug("Playing entrance {entrance}", eventForUser.Name);
                 logger.LogDebug("Playing entrance {path} path", eventForUser.TrackFilePath);
-                await mediaService.PlayTrackAsync(eventForUser.TrackFilePath, nextVoiceState.VoiceChannel);
+                await mediaService.PlayTrackAsync(eventForUser.TrackFilePath, nextVoiceState.VoiceChannel, Models.PlaySource.Local);
             }
             catch (Exception ex)
             {

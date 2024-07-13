@@ -2,7 +2,7 @@
 
 public class PermissionsOptions
 {
-    public const string ConfigSectionName = "Permissions";
+    public const string SectionName = "Permissions";
 
     public List<ulong> ForceSkipExemptionIds { get; set; } = [];
 
