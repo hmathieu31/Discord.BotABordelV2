@@ -41,7 +41,11 @@ This section assumes Docker is used to start the Bot and its dependency.
 - Create a Discord App and generate a bot token at [Discord Developer](https://discord.com/developers/applications).
   - Connect Bot to a server
   - Permissions include: [Slash Commands, Send Messages, Connect, Speak]
-- To test playback from Spotify, an Spotify Application must be created with a generated client secret [Spotify Developer](https://developer.spotify.com/dashboard)
+- To test track search from Spotify, an Spotify Application must be created with a generated client secret [Spotify Developer](https://developer.spotify.com/dashboard).
+
+> ⚠️ **Note**: Spotify source is a track search source, not a streaming source. Music streaming of Spotify tracks still requires Youtube as a source.
+
+- To limit Youtube API blocks on bots, a "Proof of Origin Token" may be generated and passed into config and help limiting 403 errors. See [Lavalink Youtube Plugin](https://github.com/lavalink-devs/youtube-source?tab=readme-ov-file#using-a-potoken)
 
 ### Installation
 
@@ -69,7 +73,7 @@ This section assumes Docker is used to start the Bot and its dependency.
     --env-file ./Lavalink/.env \
     -v $(pwd)/Lavalink/application.yml:/opt/Lavalink/application.yml \
     -p 2333:2333 \
-    ghcr.io/lavalink-devs/lavalink:4
+    ghcr.io/lavalink-devs/lavalink:<lavalink-version>
    ```
 
 5. Enter your generated token in User Secrets (In Visual Studio, VS Code with [extension](https://marketplace.visualstudio.com/items?itemName=adrianwilczynski.user-secrets), or through environment variables) and add lavalink config

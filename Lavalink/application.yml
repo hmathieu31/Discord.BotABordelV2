@@ -41,26 +41,26 @@ lavalink:
     soundcloudSearchEnabled: true
     gc-warnings: true
     #ratelimit:
-      #ipBlocks: ["1.0.0.0/8", "..."] # list of ip blocks
-      #excludedIps: ["...", "..."] # ips which should be explicit excluded from usage by lavalink
-      #strategy: "RotateOnBan" # RotateOnBan | LoadBalance | NanoSwitch | RotatingNanoSwitch
-      #searchTriggersFail: true # Whether a search 429 should trigger marking the ip as failing
-      #retryLimit: -1 # -1 = use default lavaplayer value | 0 = infinity | >0 = retry will happen this numbers times
+    #ipBlocks: ["1.0.0.0/8", "..."] # list of ip blocks
+    #excludedIps: ["...", "..."] # ips which should be explicit excluded from usage by lavalink
+    #strategy: "RotateOnBan" # RotateOnBan | LoadBalance | NanoSwitch | RotatingNanoSwitch
+    #searchTriggersFail: true # Whether a search 429 should trigger marking the ip as failing
+    #retryLimit: -1 # -1 = use default lavaplayer value | 0 = infinity | >0 = retry will happen this numbers times
     #youtubeConfig: # Required for avoiding all age restrictions by YouTube, some restricted videos still can be played without.
-      #email: "" # Email of Google account
-      #password: "" # Password of Google account
+    #email: "" # Email of Google account
+    #password: "" # Password of Google account
     #httpConfig: # Useful for blocking bad-actors from ip-grabbing your music node and attacking it, this way only the http proxy will be attacked
-      #proxyHost: "localhost" # Hostname of the proxy, (ip or domain)
-      #proxyPort: 3128 # Proxy port, 3128 is the default for squidProxy
-      #proxyUser: "" # Optional user for basic authentication fields, leave blank if you don't use basic auth
-      #proxyPassword: "" # Password for basic authentication
+    #proxyHost: "localhost" # Hostname of the proxy, (ip or domain)
+    #proxyPort: 3128 # Proxy port, 3128 is the default for squidProxy
+    #proxyUser: "" # Optional user for basic authentication fields, leave blank if you don't use basic auth
+    #proxyPassword: "" # Password for basic authentication
 
   plugins:
-    - dependency: 'com.github.topi314.lavasearch:lavasearch-plugin:1.0.0'
+    - dependency: "com.github.topi314.lavasearch:lavasearch-plugin:1.0.0"
       snapshot: false # Set to true if you want to use a snapshot version.
-    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.0.1"
+    - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.2.0"
       snapshot: false # Set to true if you want to use a snapshot version.
-    - dependency: "dev.lavalink.youtube:youtube-plugin:1.1.0"
+    - dependency: "dev.lavalink.youtube:youtube-plugin:1.8.1"
       snapshot: false # Set to true if you want to use a snapshot version.
 
 metrics:
@@ -82,6 +82,7 @@ logging:
   level:
     root: INFO
     lavalink: INFO
+    dev.lavalink.youtube.http.YoutubeOauth2Handler: INFO
 
   request:
     enabled: true
@@ -91,7 +92,6 @@ logging:
     includePayload: true
     maxPayloadLength: 10000
 
-
   logback:
     rollingpolicy:
       max-file-size: 1GB
@@ -99,6 +99,9 @@ logging:
 
 plugins:
   lavasrc:
+    providers:
+      - 'ytsearch:"%ISRC%"' # Will be ignored if track does not have an ISRC. See https://en.wikipedia.org/wiki/International_Standard_Recording_Code
+      - "ytsearch:%QUERY%" # Will be used if track has no ISRC or no track could be found for the ISRC
     sources:
       spotify: true # Enable Spotify source
       applemusic: false # Enable Apple Music source
@@ -112,12 +115,19 @@ plugins:
       countryCode: "FR"
       playlistLoadLimit: 6 # The number of pages at 100 tracks each
       albumLoadLimit: 6 # The number of pages at 50 tracks each
-      
+
   youtube:
     enabled: true # Whether this source can be used.
     allowSearch: true # Whether "ytsearch:" and "ytmsearch:" can be used.
     allowDirectVideoIds: true # Whether just video IDs can match. If false, only complete URLs will be loaded.
     allowDirectPlaylistIds: true # Whether just playlist IDs can match. If false, only complete URLs will be loaded.
+    oauth:
+      enabled: true
+      # refreshToken: "passed through environment variable PLUGINS_YOUTUBE_OAUTH_REFRESHTOKEN - defined after a successful OAuth2 Device Code flow"
+      # skipInitialization: true # Set as true through environment variable PLUGINS_YOUTUBE_OAUTH_SKIPINITIALIZATION - defined after a successful OAuth2 Device Code flow
     # The clients to use for track loading. See below for a list of valid clients.
-    # Clients are queried in the order they are given (left-to-right)
-    clients: ["MUSIC", "ANDROID", "WEB"]
+    clients:
+      - WEB
+      - MUSIC
+      - ANDROID_TESTSUITE
+      - TVHTML5EMBEDDED
