@@ -4,6 +4,11 @@ on:
     types: [published]
 
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to tag the docker image and deploy'
+        required: true
+        default: 'latest'
 
 permissions:
   id-token: write
@@ -27,13 +32,12 @@ jobs:
           client-id: ${{ vars.AZURE_CLIENT_ID}}
           tenant-id: ${{ vars.AZURE_TENANT_ID}}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID}}
-          auth-type: IDENTITY
 
       - name: Build and push container image to registry
         uses: azure/CLI@v2
         with:
           inlineScript: >
-            az acr build -t ${{ vars.CONTAINER_REGISTRY_LOGIN_SERVER }}/${{ env.PROJECT_NAME_FOR_DOCKER }}:${{ github.event.release.tag_name }} -t ${{ vars.CONTAINER_REGISTRY_LOGIN_SERVER }}/${{ env.PROJECT_NAME_FOR_DOCKER }}:latest --registry ${{ vars.CONTAINER_REGISTRY_LOGIN_SERVER }} --file ${{ env.DOCKER_FILE_PATH }} .
+            az acr build -t ${{ vars.CONTAINER_REGISTRY_LOGIN_SERVER }}/${{ env.PROJECT_NAME_FOR_DOCKER }}:${{ github.event.release.tag_name  || inputs.version }} -t ${{ vars.CONTAINER_REGISTRY_LOGIN_SERVER }}/${{ env.PROJECT_NAME_FOR_DOCKER }}:latest --registry ${{ vars.CONTAINER_REGISTRY_LOGIN_SERVER }} --file ${{ env.DOCKER_FILE_PATH }} .
 
   deploy:
     runs-on: ubuntu-latest
@@ -46,7 +50,6 @@ jobs:
           client-id: ${{ vars.AZURE_CLIENT_ID}}
           tenant-id: ${{ vars.AZURE_TENANT_ID}}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID}}
-          auth-type: IDENTITY
 
       - name: Set up container secrets
         uses:  azure/CLI@v2
@@ -75,7 +78,7 @@ jobs:
             az containerapp update \
               --name ${{ vars.CONTAINER_APP_NAME }} \
               --resource-group ${{ vars.CONTAINER_APP_RESOURCE_GROUP_NAME }} \
-              --image ${{ vars.CONTAINER_REGISTRY_LOGIN_SERVER }}/${{ env.PROJECT_NAME_FOR_DOCKER }}:${{ github.event.release.tag_name }} \
+              --image ${{ vars.CONTAINER_REGISTRY_LOGIN_SERVER }}/${{ env.PROJECT_NAME_FOR_DOCKER }}:${{ github.event.release.tag_name || inputs.version }} \
               --set-env-vars DiscordBot__Token=secretref:discordbot-token
             
       - name: logout
