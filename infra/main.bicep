@@ -89,7 +89,10 @@ module containerApps './modules/containerapps/containerapps.bicep' = {
     lavalinkImage: lavalinkImage
     lavalinkConfig: lavalinkConfig
     discordBotImage: discordBotImage
-    lavalinkPasswordKvSecretUri: first(filter(kvModule.outputs.secretUris, secret => secret.name == lavalinkPasswordKvName)).uri
+    lavalinkPasswordKvSecretUri: first(filter(
+      kvModule.outputs.secretUris,
+      secret => secret.name == lavalinkPasswordKvName
+    )).uri
     appInsKvSecretUri: logAnalytics.outputs.appInsConnStrKvUri
     storageAccountName: storageAccountName
     shareName: storageAccount::fileService::shares.name
@@ -168,6 +171,11 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
         enabledProtocols: 'SMB'
       }
     }
+
+    resource lavalinkConfigYml 'shares@2023-01-01' = {
+      name: 'lavalink-app-yml'
+      properties: {}
+    }
   }
 }
 
@@ -179,5 +187,27 @@ module logAnalytics './modules/loganalyticsworspace/loganalyticsworspace.bicep' 
     applicationInsightsName: appInsName
     namelaw: laWorkspaceName
     kvName: kvName
+  }
+  dependsOn: [
+    keyVault
+  ]
+}
+
+resource uaiDevOps 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-07-31-preview' = {
+  name: 'uai-devops-botabordelv2-${toLower(environment)}'
+  location: location
+  tags: tags
+}
+
+resource acrPushRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(resourceGroup().id, uaiDevOps.id, 'AcrPush')
+  scope: resourceGroup()
+  properties: {
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      '7f951dda-4ed3-4680-a7ca-43fe172d538d'
+    ) // AcrPush
+    principalId: uaiDevOps.properties.principalId
+    principalType: 'ServicePrincipal'
   }
 }

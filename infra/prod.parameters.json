@@ -3,13 +3,13 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "environment": {
-      "value": "PROD"
+      "value": "PROD02"
     },
     "lavalinkImage": {
       "value": "ghcr.io/lavalink-devs/lavalink:v4-update-lp-alpine"
     },
     "discordBotImage": {
-      "value": "crdiscordbotabordelv2prod.azurecr.io/discordbotabordelv2:latest"
+      "value": "crdiscordbotabordelv2prod02.azurecr.io/discordbotabordelv2:latest"
     }
   }
 }
