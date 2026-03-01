@@ -49,8 +49,7 @@ public sealed class MusicCommands(StandardMediaService mediaService,
 
     [SlashCommand("play", "Play a song", runMode: RunMode.Async)]
     public async Task Play(
-        [Summary("Song", "The song to play")] string song,
-        [Summary("Source", "The source from where to search the track")] PlaySource source = PlaySource.YouTube
+        [Summary("Song", "The song to play")] string song
         )
     {
         try
@@ -58,6 +57,9 @@ public sealed class MusicCommands(StandardMediaService mediaService,
             // If the command is called from a button, the interaction was already deferred
             if (Context.Interaction is not SocketMessageComponent)
                 await DeferAsync();
+
+            // Currently only SoundCloud is supported as a source for direct play
+            var source = PlaySource.SoundCloud;
 
             var sourceEmote = GetSourceEmote(source);
             IVoiceChannel? channel = (Context.User as IGuildUser)?.VoiceChannel;
@@ -92,7 +94,7 @@ public sealed class MusicCommands(StandardMediaService mediaService,
 
         await UpdateSearchMsg(queryKey, trackIndex, ctx!);
 
-        await Play(searchCache.PopSearchedUri(Guid.Parse(queryKey), trackIndex).ToString(), source);
+        await Play(searchCache.PopSearchedUri(Guid.Parse(queryKey), trackIndex).ToString());
     }
 
     [SlashCommand("queue", "Display queue of tracks", runMode: RunMode.Async)]
@@ -186,12 +188,13 @@ public sealed class MusicCommands(StandardMediaService mediaService,
 
     [SlashCommand("search", "Search for a song", runMode: RunMode.Async)]
     public async Task Search(
-        [Summary("Song", "The song to search for")] string song,
-        [Summary("Source", "The source from where to search the track")] PlaySource source = PlaySource.YouTube
+        [Summary("Song", "The song to search for")] string song
         )
     {
         await DeferAsync();
 
+        // Currently only SoundCloud is supported as a source for direct play
+        var source = PlaySource.SoundCloud;
         try
         {
             var result = await mediaService.SearchTrackAsync(song, source);
