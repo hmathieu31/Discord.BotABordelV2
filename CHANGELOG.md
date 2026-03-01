@@ -1,3 +1,9 @@
+## v2.7.2 (2026-03-01)
+
+### Fix
+
+- Package breaking change issue
+
 ## v2.7.1 (2026-03-01)
 
 ### Fix
