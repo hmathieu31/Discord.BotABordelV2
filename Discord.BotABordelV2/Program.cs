@@ -128,7 +128,7 @@ public static class Program
             GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent,
         })
                 .AddSingleton<DiscordSocketClient>()
-                .AddSingleton<InteractionService>();
+                .AddSingleton(sp => new InteractionService(sp.GetRequiredService<DiscordSocketClient>()));
 
         return services;
     }
