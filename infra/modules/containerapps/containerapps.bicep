@@ -99,6 +99,14 @@ var discordBotContainer = {
       name: 'ConnectionStrings__AppInsights'
       secretRef: 'appinsights-connectionstring'
     }
+    {
+      name: 'DOTNET_ENVIRONMENT'
+      value: 'Production'
+    }
+    {
+      name: 'DiscordBot__Token'
+      secretRef: 'discordbot-token'
+    }
   ]
   resources: {
     cpu: json('0.5')
@@ -143,6 +151,18 @@ resource containerAppEnvironment 'Microsoft.App/managedEnvironments@2023-08-01-p
       }
     }
   }
+
+  resource lavalinkConfigYml 'storages@2023-08-01-preview' = {
+    name: 'lavalink-app-yml'
+    properties: {
+      azureFile: {
+        accountName: storageAccount.name
+        accountKey: storageAccount.listKeys().keys[0].value
+        shareName: 'lavalink-app-yml'
+        accessMode: 'ReadOnly'
+      }
+    }
+  }
 }
 
 resource containerAppLavalink 'Microsoft.App/containerapps@2023-08-01-preview' = {
@@ -180,6 +200,11 @@ resource containerAppLavalink 'Microsoft.App/containerapps@2023-08-01-preview' =
           name: containerAppVolumeName
           storageType: 'AzureFile'
           storageName: containerAppEnvironment::azureFiles.name
+        }
+        {
+          name: 'appyml'
+          storageType: 'AzureFile'
+          storageName: containerAppEnvironment::lavalinkConfigYml.name
         }
       ]
       containers: [
@@ -229,6 +254,11 @@ resource containerAppDiscordBot 'Microsoft.App/containerapps@2023-08-01-preview'
         {
           name: 'appinsights-connectionstring'
           keyVaultUrl: appInsKvSecretUri
+          identity: uaiCaDiscordBot.id
+        }
+        {
+          name: 'discordbot-token'
+          keyVaultUrl: appConfKvSecretUri
           identity: uaiCaDiscordBot.id
         }
       ]
