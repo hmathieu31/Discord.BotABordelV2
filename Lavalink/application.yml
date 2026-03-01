@@ -60,7 +60,7 @@ lavalink:
       snapshot: false # Set to true if you want to use a snapshot version.
     - dependency: "com.github.topi314.lavasrc:lavasrc-plugin:4.2.0"
       snapshot: false # Set to true if you want to use a snapshot version.
-    - dependency: "dev.lavalink.youtube:youtube-plugin:1.8.1"
+    - dependency: "dev.lavalink.youtube:youtube-plugin:1.10.2"
       snapshot: false # Set to true if you want to use a snapshot version.
 
 metrics:

@@ -255,8 +255,7 @@ public abstract class MediaServiceBase(ILogger logger,
             PlaySource.Spotify => await AudioService.Tracks.LoadTrackAsync(track, TrackSearchMode.Spotify),
             PlaySource.Local => await AudioService.Tracks.LoadTrackAsync(
                 Path.GetFullPath(track),
-                new TrackLoadOptions(
-                    StrictSearch: false)),
+                new TrackLoadOptions()),
             _ => throw new NotImplementedException($"No source type {source}")
         };
 }

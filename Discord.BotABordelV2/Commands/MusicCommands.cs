@@ -306,8 +306,7 @@ public sealed class MusicCommands(StandardMediaService mediaService,
     {
         var searchMsgComponents = ctx.Message.Components;
         var newBtnsBuilder = new ComponentBuilder();
-        foreach (var btn in from actRow in searchMsgComponents
-                            from comp in actRow.Components
+        foreach (var btn in from comp in searchMsgComponents
                             where comp is ButtonComponent
                             select comp as ButtonComponent)
         {

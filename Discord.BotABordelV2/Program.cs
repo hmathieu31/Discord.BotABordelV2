@@ -9,7 +9,6 @@ using Discord.BotABordelV2.Services.Media;
 using Discord.BotABordelV2.Services.Permissions;
 using Discord.BotABordelV2.Services.ShadowBan;
 using Discord.Interactions;
-using Discord.Net;
 using Discord.WebSocket;
 
 using Lavalink4NET.Extensions;
